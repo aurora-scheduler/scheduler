@@ -970,27 +970,27 @@ aurorabuild all
 setup_ssh
 setup_docker_registry
 
-#test_sla_aware_maintenance "${TEST_SLA_AWARE_MAINTENANCE_ARGS[@]}"
-#
-#test_partition_awareness "${TEST_PARTITION_AWARENESS_ARGS[@]}"
-#
-#test_version
-#test_http_example "${TEST_JOB_ARGS[@]}"
-#test_http_example "${TEST_JOB_WATCH_SECS_ARGS[@]}"
-## TODO(rdelvalle): Add verification that each batch has the right number of active instances.
-#test_http_example "${TEST_JOB_VAR_BATCH_UPDATE_ARGS[@]}"
-#test_health_check
-#
-#test_mesos_maintenance "${TEST_MAINTENANCE_JOB_ARGS[@]}"
-#
-#test_http_example_basic "${TEST_JOB_REVOCABLE_ARGS[@]}"
-#
-#test_http_example_basic "${TEST_JOB_GPU_ARGS[@]}"
-#
-#test_http_example_basic "${TEST_JOB_KILL_MESSAGE_ARGS[@]}"
-#
-#test_http_example "${TEST_JOB_DOCKER_ARGS[@]}"
-#
+test_sla_aware_maintenance "${TEST_SLA_AWARE_MAINTENANCE_ARGS[@]}"
+
+test_partition_awareness "${TEST_PARTITION_AWARENESS_ARGS[@]}"
+
+test_version
+test_http_example "${TEST_JOB_ARGS[@]}"
+test_http_example "${TEST_JOB_WATCH_SECS_ARGS[@]}"
+# TODO(rdelvalle): Add verification that each batch has the right number of active instances.
+test_http_example "${TEST_JOB_VAR_BATCH_UPDATE_ARGS[@]}"
+test_health_check
+
+test_mesos_maintenance "${TEST_MAINTENANCE_JOB_ARGS[@]}"
+
+test_http_example_basic "${TEST_JOB_REVOCABLE_ARGS[@]}"
+
+test_http_example_basic "${TEST_JOB_GPU_ARGS[@]}"
+
+test_http_example_basic "${TEST_JOB_KILL_MESSAGE_ARGS[@]}"
+
+test_http_example "${TEST_JOB_DOCKER_ARGS[@]}"
+
 
 setup_image_stores
 test_appc_unified
