@@ -1,8 +1,8 @@
 ![Aurora Logo](docs/images/aurora_logo.png)
 
-![Build Status](https://github.com/apache/aurora/workflows/CI/badge.svg?branch=master)
+![Build Status](https://github.com/aurora-scheduler/aurora/workflows/CI/badge.svg?branch=master)
 
-[Apache Aurora](https://aurora.apache.org/) lets you use an [Apache Mesos](http://mesos.apache.org)
+[Aurora Scheduler](https://aurora-scheduler.github.io/) lets you use an [Apache Mesos](http://mesos.apache.org)
 cluster as a private cloud. It supports running long-running services, cron jobs, and ad-hoc jobs.
 Aurora aims to make it extremely quick and easy to take a built application and run it on machines
 in a cluster, with an emphasis on reliability. It provides basic operations to manage services
@@ -71,11 +71,11 @@ Are you using Aurora too?  Let us know, or submit a patch to join the list!
 - [Uber](https://www.uber.com)
 
 ## Getting Help
-If you have questions that aren't answered in our [documentation](https://aurora.apache.org/documentation/latest/), you can reach out to one of our [mailing lists](https://aurora.apache.org/community/).
-We're also often available in Slack: #aurora on [mesos.slack.com](http://mesos.slack.com).
+If you have questions that aren't answered in our [documentation](https://aurora-scheduler.github.io/documentation/latest/),
+you can reach out to the maintainers via Slack: #aurora on [mesos.slack.com](http://mesos.slack.com).
 Invites to our slack channel may be requested via [mesos-slackin.herokuapp.com](https://mesos-slackin.herokuapp.com/)
 
-You can also file bugs/issues in our [Github](https://github.com/apache/aurora/issues) repo.
+You can also file bugs/issues in our [Github](https://github.com/aurora-scheduler/aurora/issues) repo.
 
 
 ## License
