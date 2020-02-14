@@ -2,7 +2,7 @@
 
 First things first, you'll need the source! The Aurora source is available from Apache git:
 
-    git clone https://gitbox.apache.org/repos/asf/aurora
+    git clone https://github.com/aurora-scheduler/aurora
 
 Read the Style Guides
 ---------------------
@@ -14,12 +14,11 @@ both languages.
 
 ## Find Something to Do
 
-There are issues in [Github](https://github.com/apache/aurora/issues) with the
-["good first issue" label](https://github.com/apache/aurora/issues?q=is%3Aissue+label%3A%22good+first+issue%22+is%3Aopen)
+There are issues in [Github](https://github.com/aurora-scheduler/aurora/issues) with the
+["good first issue" label](https://github.com/aurora-scheduler/aurora/issues?q=is%3Aissue+label%3A%22good+first+issue%22+is%3Aopen)
 that are good starting places for new Aurora contributors; pick one of these and dive in! To assign
 a task to yourself, you may chime in on the issue discussion and ask one of the maintainers
-to assign the issue to you, drop us a message on our Slack channel, or
-email us at dev@apache.aurora.org.
+to assign the issue to you, drop us a message on our Slack channel.
 
 The next step is to prepare your patch and then send us a Pull Request via the Github Web UI.
 
