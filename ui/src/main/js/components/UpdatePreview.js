@@ -15,7 +15,7 @@ export default function UpdatePreview({ update }) {
         className={`update-preview ${getClassForUpdateStatus(update.update.summary.state.status)}`}>
         <Link
           to={`/scheduler/${role}/${environment}/${name}/update/${id}`}>
-         Update In Progress
+          Update In Progress
         </Link>
         <span className='update-preview-details'>
           started by <strong>{update.update.summary.user}</strong> <span>
