@@ -17,7 +17,7 @@ plugins {
   id 'com.github.hierynomus.license' version '0.11.0'
   id "com.github.node-gradle.node" version "1.5.3"
   id 'me.champeau.gradle.jmh' version '0.4.8'
-  id "com.github.spotbugs" version "1.6.4"
+  id "com.github.spotbugs" version "4.0.1"
 }
 
 apply plugin: 'application'
@@ -414,10 +414,11 @@ dependencies {
 def runCodeQuality = project.hasProperty('q')
 def codeQualityTasks = [
     Checkstyle,
-    com.github.spotbugs.SpotBugsTask,
+    com.github.spotbugs.snom.SpotBugsTask,
     nl.javadude.gradle.plugins.license.License,
     Pmd
 ]
+
 codeQualityTasks.each {
   tasks.withType(it) {
     enabled = runCodeQuality
@@ -430,11 +431,11 @@ checkstyle {
 }
 
 spotbugs {
-  toolVersion = '3.1.0'
+  toolVersion = '4.0.0'
   effort = "max"
 }
 
-tasks.withType(com.github.spotbugs.SpotBugsTask) {
+tasks.withType(com.github.spotbugs.snom.SpotBugsTask) {
   reports {
     xml.enabled = false
     html.enabled = true
