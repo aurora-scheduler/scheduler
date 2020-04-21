@@ -1,3 +1,11 @@
+0.22.1
+======
+
+### New/updated:
+- Bug fix for batch auto-pause. Barriers now wait until all instances enter a terminal state before
+  attempting to move to a new batch. A final pause when all instances have entered a terminal state
+  is no longer part of the auto pause mechanism.
+
 0.22.0
 ======
 
