@@ -12,7 +12,7 @@ To very concisely describe Aurora, it is like a distributed monit or distributed
 you can instruct to do things like _run 100 of these, somewhere, forever_.
 
 ### What this project is and what it is not
-Aurora Scheduler is a reboot of Apache Aurora that seeks to continue its development.
+Aurora Scheduler is a reboot of Apache Aurora that seeks to continue its development after the latter entered the [Apache Attic](https://lists.apache.org/thread.html/reee926fceea75b7cc25110abb9deb3c41921c1585157a7f45c814419%40%3Cdev.aurora.apache.org%3E).
 That having been said, the project is largely in maintenance mode. We will continue to try to provide
 quality of life updates to the codebase but we don't anticipate any new large features being landed.
 
