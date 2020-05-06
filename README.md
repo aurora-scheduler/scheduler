@@ -17,8 +17,7 @@ That having been said, the project is largely in maintenance mode. We will conti
 quality of life updates to the codebase but we don't anticipate any new large features being landed.
 
 Furthermore, as a result of the decreased amount of contributors available, focus will be turned to the scheduler.
-Anyone who depends on tooling outside of the scheduler should look at taking up maintenance or otherwise contribute
-to those tools.
+Anyone who depends on tooling outside of the scheduler should look at taking up maintenance of those tools.
 
 Changes made to the scheduler will always strive to be compatible with existing tools but compatibility is _not_ guaranteed.
 
