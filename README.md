@@ -21,7 +21,7 @@ Anyone who depends on tooling outside of the scheduler should look at taking up 
 
 Changes made to the scheduler will always strive to be compatible with existing tools but compatibility is _not_ guaranteed.
 More importantly, in many cases we will not be testing against such tools so it is
-up to users to report incompatible changes.
+up to users to report incompatible changes. **Tools in this case also include the [original Python2 client](https://github.com/aurora-scheduler/client).**
 
 ## Features
 
