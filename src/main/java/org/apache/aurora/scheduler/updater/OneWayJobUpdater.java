@@ -252,7 +252,7 @@ class OneWayJobUpdater<K, T> {
       statusChanges.add(WORKING);
       stateMachine.transition(FAILED);
       statusChanges.add(FAILED);
-      return new SideEffect(Optional.empty(), statusChanges.build(), Optional.empty());
+      return new SideEffect(Result.FAILED_TERMINATED.getAction(), statusChanges.build(), Result.FAILED_TERMINATED.getFailure());
     }
 
     SideEffect evaluate(T actualState) {
