@@ -88,6 +88,10 @@ interface UpdateFactory {
           settings.getMinWaitInInstanceRunningMs() >= 0,
           "Min wait in running must be non-negative.");
 
+      if (!rollingForward) {
+        prevFailedInstances = ImmutableSet.of();
+      }
+
       if (settings.getUpdateStrategy().isSetBatchStrategy()) {
         checkArgument(
             settings.getUpdateStrategy().getBatchStrategy().getGroupSize() > 0,
