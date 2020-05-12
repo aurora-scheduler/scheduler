@@ -14,6 +14,7 @@
 package org.apache.aurora.scheduler.updater;
 
 import java.io.Serializable;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -58,12 +59,14 @@ interface UpdateFactory {
    *
    * @param configuration Configuration to act on.
    * @param rollingForward {@code true} if this is a job update, {@code false} if it is a rollback.
+   * @param prevFailedInstances A set of instances that previously failed before update was paused.
    * @return An updater that will execute the job update as specified in the
    *         {@code configuration}.
    */
   Update newUpdate(
       IJobUpdateInstructions configuration,
-      boolean rollingForward);
+      boolean rollingForward,
+      Set<Integer> prevFailedInstances);
 
   class UpdateFactoryImpl implements UpdateFactory {
     private final Clock clock;
@@ -74,7 +77,10 @@ interface UpdateFactory {
     }
 
     @Override
-    public Update newUpdate(IJobUpdateInstructions instructions, boolean rollingForward) {
+    public Update newUpdate(
+        IJobUpdateInstructions instructions,
+        boolean rollingForward,
+        Set<Integer> prevFailedInstances) {
       requireNonNull(instructions);
       IJobUpdateSettings settings = instructions.getSettings();
 
@@ -164,7 +170,8 @@ interface UpdateFactory {
           new OneWayJobUpdater<>(
               strategy,
               settings.getMaxFailedInstances(),
-              evaluators.build()),
+              evaluators.build(),
+              prevFailedInstances),
           successStatus,
           failureStatus);
     }

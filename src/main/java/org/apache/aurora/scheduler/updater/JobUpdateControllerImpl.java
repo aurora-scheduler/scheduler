@@ -202,7 +202,7 @@ class JobUpdateControllerImpl implements JobUpdateController {
       IJobKey job = summary.getKey().getJob();
 
       // Validate the update configuration by making sure we can create an updater for it.
-      updateFactory.newUpdate(update.getInstructions(), true);
+      updateFactory.newUpdate(update.getInstructions(), true, ImmutableSet.of());
 
       if (instructions.getInitialState().isEmpty() && !instructions.isSetDesiredState()) {
         throw new IllegalArgumentException("Update instruction is a no-op.");
@@ -586,7 +586,23 @@ class JobUpdateControllerImpl implements JobUpdateController {
       IJobUpdate jobUpdate = updateStore.fetchJobUpdate(key).get().getUpdate();
       UpdateFactory.Update update;
       try {
-        update = updateFactory.newUpdate(jobUpdate.getInstructions(), action == ROLL_FORWARD);
+        Set<Integer> prevFailedInstances = updateStore.fetchJobUpdate(key).get()
+            .getInstanceEvents()
+            .stream()
+            .filter(e -> e.getAction() == JobUpdateAction.INSTANCE_UPDATE_FAILED)
+            .map(IJobInstanceUpdateEvent::getInstanceId)
+            .collect(ImmutableSet.toImmutableSet());
+
+        update = updateFactory.newUpdate(jobUpdate.getInstructions(),
+            action == ROLL_FORWARD,
+            prevFailedInstances);
+
+        if (prevFailedInstances.size() > 0) {
+          LOG.info("{} update is resuming and instances {} already previously failed",
+              key,
+              prevFailedInstances);
+        }
+
       } catch (RuntimeException e) {
         LOG.warn("Uncaught exception: " + e, e);
         changeJobUpdateStatus(

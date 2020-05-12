@@ -15,6 +15,7 @@ package org.apache.aurora.scheduler.updater;
 
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -52,6 +53,7 @@ class OneWayJobUpdater<K, T> {
 
   private final UpdateStrategy<K> strategy;
   private final int maxFailedInstances;
+  private final Set<K> prevFailedInstances;
   private final Map<K, InstanceUpdate<T>> instances;
   private final StateMachine<OneWayStatus> stateMachine =
       StateMachine.<OneWayStatus>builder("job_update")
@@ -70,14 +72,23 @@ class OneWayJobUpdater<K, T> {
    * @param maxFailedInstances Maximum tolerated failures before the update is considered failed.
    * @param instanceEvaluators Evaluate the state of individual instances, and decide what actions
    *                           must be taken to update them.
+   * @param prevFailedInstances A set of instances that previously failed before update was paused.
+   *
    */
   OneWayJobUpdater(
       UpdateStrategy<K> strategy,
       int maxFailedInstances,
-      Map<K, StateEvaluator<T>> instanceEvaluators) {
+      Map<K, StateEvaluator<T>> instanceEvaluators,
+      Set<K> prevFailedInstances) {
 
     this.strategy = requireNonNull(strategy);
     this.maxFailedInstances = maxFailedInstances;
+   // Due to the way pause/resume work, when an update is resumed,
+   // the underlying data structures are recreate. This recreation is lossy as we don't
+   // have information about previously failed instance updates leading to possible
+   // new cycles of watch and fail. Depending on how often the instance fails and how early
+   // in the update it fails, it may slow down updates with auto pause a large amount.
+    this.prevFailedInstances = ImmutableSet.copyOf(prevFailedInstances);
     requireNonNull(instanceEvaluators);
 
     this.instances = ImmutableMap.copyOf(Maps.transformEntries(
@@ -177,7 +188,11 @@ class OneWayJobUpdater<K, T> {
       Set<K> nextGroup = strategy.getNextGroup(idle, working);
       if (!nextGroup.isEmpty()) {
         for (K instance : nextGroup) {
-          builder.put(instance, instances.get(instance).evaluate(stateProvider.getState(instance)));
+          if(prevFailedInstances.contains(instance)) {
+            builder.put(instance, instances.get(instance).evaluateAsPrevFailed());
+          } else {
+            builder.put(instance, instances.get(instance).evaluate(stateProvider.getState(instance)));
+          }
         }
         LOG.debug("Changed working set for update to " + filterByStatus(instances, WORKING));
       }
@@ -228,6 +243,15 @@ class OneWayJobUpdater<K, T> {
 
     SideEffect.InstanceUpdateStatus getState() {
       return stateMachine.getState();
+    }
+
+    SideEffect evaluateAsPrevFailed() {
+      ImmutableSet.Builder<SideEffect.InstanceUpdateStatus> statusChanges = ImmutableSet.builder();
+      stateMachine.transition(WORKING);
+      statusChanges.add(WORKING);
+      stateMachine.transition(FAILED);
+      statusChanges.add(FAILED);
+      return new SideEffect(Optional.empty(), statusChanges.build(), Optional.empty());
     }
 
     SideEffect evaluate(T actualState) {
