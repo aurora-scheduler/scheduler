@@ -577,22 +577,22 @@ class JobUpdateControllerImpl implements JobUpdateController {
     if (action == STOP_WATCHING) {
       updates.remove(job);
     } else if (action == ROLL_FORWARD || action == ROLL_BACK) {
+      Set<Integer> prevFailedInstances = ImmutableSet.of();
       if (action == ROLL_BACK) {
         updates.remove(job);
       } else {
         checkState(!updates.containsKey(job), "Updater already exists for %s", job);
-      }
-
-      IJobUpdate jobUpdate = updateStore.fetchJobUpdate(key).get().getUpdate();
-      UpdateFactory.Update update;
-      try {
-        Set<Integer> prevFailedInstances = updateStore.fetchJobUpdate(key).get()
+        prevFailedInstances = updateStore.fetchJobUpdate(key).get()
             .getInstanceEvents()
             .stream()
             .filter(e -> e.getAction() == JobUpdateAction.INSTANCE_UPDATE_FAILED)
             .map(IJobInstanceUpdateEvent::getInstanceId)
             .collect(ImmutableSet.toImmutableSet());
+      }
 
+      IJobUpdate jobUpdate = updateStore.fetchJobUpdate(key).get().getUpdate();
+      UpdateFactory.Update update;
+      try {
         update = updateFactory.newUpdate(jobUpdate.getInstructions(),
             action == ROLL_FORWARD,
             prevFailedInstances);
