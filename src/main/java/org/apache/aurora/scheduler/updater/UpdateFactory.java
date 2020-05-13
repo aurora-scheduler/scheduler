@@ -59,7 +59,7 @@ interface UpdateFactory {
    *
    * @param configuration Configuration to act on.
    * @param rollingForward {@code true} if this is a job update, {@code false} if it is a rollback.
-   * @param prevFailedInstances A set of instances that previously failed before update was paused.
+   * @param prevFailedInstances A set of instances that previously failed before update was resumed.
    * @return An updater that will execute the job update as specified in the
    *         {@code configuration}.
    */
@@ -87,10 +87,6 @@ interface UpdateFactory {
       checkArgument(
           settings.getMinWaitInInstanceRunningMs() >= 0,
           "Min wait in running must be non-negative.");
-
-      if (!rollingForward) {
-        prevFailedInstances = ImmutableSet.of();
-      }
 
       if (settings.getUpdateStrategy().isSetBatchStrategy()) {
         checkArgument(
