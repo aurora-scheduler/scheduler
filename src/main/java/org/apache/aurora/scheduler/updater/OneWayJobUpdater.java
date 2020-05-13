@@ -72,7 +72,7 @@ class OneWayJobUpdater<K, T> {
    * @param maxFailedInstances Maximum tolerated failures before the update is considered failed.
    * @param instanceEvaluators Evaluate the state of individual instances, and decide what actions
    *                           must be taken to update them.
-   * @param prevFailedInstances A set of instances that previously failed before update was paused.
+   * @param prevFailedInstances A set of instances that previously failed before update was resumed.
    *
    */
   OneWayJobUpdater(
@@ -83,11 +83,6 @@ class OneWayJobUpdater<K, T> {
 
     this.strategy = requireNonNull(strategy);
     this.maxFailedInstances = maxFailedInstances;
-   // Due to the way pause/resume work, when an update is resumed,
-   // the underlying data structures are recreate. This recreation is lossy as we don't
-   // have information about previously failed instance updates leading to possible
-   // new cycles of watch and fail. Depending on how often the instance fails and how early
-   // in the update it fails, it may slow down updates with auto pause a large amount.
     this.prevFailedInstances = ImmutableSet.copyOf(prevFailedInstances);
     requireNonNull(instanceEvaluators);
 
@@ -188,10 +183,18 @@ class OneWayJobUpdater<K, T> {
       Set<K> nextGroup = strategy.getNextGroup(idle, working);
       if (!nextGroup.isEmpty()) {
         for (K instance : nextGroup) {
+          // Due to the way pause/resume work, on resume a new OneWayJobUpdater is recreated.
+          // The new OneWayJobUpdater does not have information about previously failed
+          // instances. As updates are idempotent, we re-evaluate the update which correctly
+          // evaluates successfully updated instances to a NOOP but incorrectly attempts to
+          // "re-update" previously failed instances.
+          // Here we short circuit here to avoid retrying previously failed instances.
           if (prevFailedInstances.contains(instance)) {
             instances.get(instance).evaluateAsPrevFailed();
           } else {
-            builder.put(instance, instances.get(instance).evaluate(stateProvider.getState(instance)));
+            builder.put(
+                instance,
+                instances.get(instance).evaluate(stateProvider.getState(instance)));
           }
         }
         LOG.debug("Changed working set for update to " + filterByStatus(instances, WORKING));
@@ -245,13 +248,12 @@ class OneWayJobUpdater<K, T> {
       return stateMachine.getState();
     }
 
-    SideEffect evaluateAsPrevFailed() {
+    void evaluateAsPrevFailed() {
       ImmutableSet.Builder<SideEffect.InstanceUpdateStatus> statusChanges = ImmutableSet.builder();
       stateMachine.transition(WORKING);
       statusChanges.add(WORKING);
       stateMachine.transition(FAILED);
       statusChanges.add(FAILED);
-      return new SideEffect(Result.FAILED_TERMINATED.getAction(), statusChanges.build(), Result.FAILED_TERMINATED.getFailure());
     }
 
     SideEffect evaluate(T actualState) {
