@@ -185,11 +185,10 @@ class OneWayJobUpdater<K, T> {
     } else {
       ImmutableMap.Builder<K, SideEffect> builder = ImmutableMap.builder();
       Set<K> working = filterByStatus(instances, WORKING);
-      Set<K> failed = filterByStatus(instances, FAILED);
       Set<K> nextGroup = strategy.getNextGroup(idle, working);
       if (!nextGroup.isEmpty()) {
         for (K instance : nextGroup) {
-          if (prevFailedInstances.contains(instance) && !failed.contains(instance)) {
+          if (prevFailedInstances.contains(instance)) {
             instances.get(instance).evaluateAsPrevFailed();
           } else {
             builder.put(instance, instances.get(instance).evaluate(stateProvider.getState(instance)));
