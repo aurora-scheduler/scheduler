@@ -180,6 +180,7 @@ class OneWayJobUpdater<K, T> {
     } else {
       ImmutableMap.Builder<K, SideEffect> builder = ImmutableMap.builder();
       Set<K> working = filterByStatus(instances, WORKING);
+      Set<K> failed = filterByStatus(instances, FAILED);
       Set<K> nextGroup = strategy.getNextGroup(idle, working);
       if (!nextGroup.isEmpty()) {
         for (K instance : nextGroup) {
@@ -189,7 +190,7 @@ class OneWayJobUpdater<K, T> {
           // evaluates successfully updated instances to a NOOP but incorrectly attempts to
           // "re-update" previously failed instances.
           // Here we short circuit here to avoid retrying previously failed instances.
-          if (prevFailedInstances.contains(instance)) {
+          if (prevFailedInstances.contains(instance) && !failed.contains(instance)) {
             instances.get(instance).evaluateAsPrevFailed();
           } else {
             builder.put(
