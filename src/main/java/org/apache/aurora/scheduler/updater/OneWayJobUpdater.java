@@ -250,11 +250,8 @@ class OneWayJobUpdater<K, T> {
     }
 
     void evaluateAsPrevFailed() {
-      ImmutableSet.Builder<SideEffect.InstanceUpdateStatus> statusChanges = ImmutableSet.builder();
       stateMachine.transition(WORKING);
-      statusChanges.add(WORKING);
       stateMachine.transition(FAILED);
-      statusChanges.add(FAILED);
     }
 
     SideEffect evaluate(T actualState) {
