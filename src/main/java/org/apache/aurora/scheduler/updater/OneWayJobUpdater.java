@@ -190,7 +190,7 @@ class OneWayJobUpdater<K, T> {
       if (!nextGroup.isEmpty()) {
         for (K instance : nextGroup) {
           if (prevFailedInstances.contains(instance) && !failed.contains(instance)) {
-            builder.put(instance, instances.get(instance).evaluateAsPrevFailed());
+            instances.get(instance).evaluateAsPrevFailed();
           } else {
             builder.put(instance, instances.get(instance).evaluate(stateProvider.getState(instance)));
           }
