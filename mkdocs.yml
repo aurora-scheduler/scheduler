@@ -1,1 +1,3 @@
 site_name: Aurora Scheduler Documentation
+theme:
+    name: readthedocs
