@@ -1,3 +1,7 @@
 site_name: Aurora Scheduler Documentation
 theme:
     name: readthedocs
+    highlightjs: true
+    hljs_languages:
+        - java
+        - python
