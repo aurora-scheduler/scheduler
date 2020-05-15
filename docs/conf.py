@@ -18,8 +18,8 @@
 # -- Project information -----------------------------------------------------
 
 project = 'Aurora Scheduler'
-copyright = '2020, Aurora Scheduler contributors and Apache Aurora contributors'
-author = 'Aurora Scheduler contributors and Apache Aurora contributors'
+copyright = '2020, Aurora Scheduler and Apache Aurora contributors'
+author = 'Aurora Scheduler and Apache Aurora contributors'
 
 
 # -- General configuration ---------------------------------------------------
