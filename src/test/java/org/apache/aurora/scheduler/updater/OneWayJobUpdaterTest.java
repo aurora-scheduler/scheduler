@@ -153,7 +153,7 @@ public class OneWayJobUpdaterTest extends EasyMockTest {
 
     control.replay();
 
-    jobUpdater = new OneWayJobUpdater<>(strategy, 0, allInstances);
+    jobUpdater = new OneWayJobUpdater<>(strategy, 0, allInstances, ImmutableSet.of());
 
     evaluate(
         OneWayStatus.WORKING,
@@ -204,7 +204,7 @@ public class OneWayJobUpdaterTest extends EasyMockTest {
 
     control.replay();
 
-    jobUpdater = new OneWayJobUpdater<>(strategy, 0, allInstances);
+    jobUpdater = new OneWayJobUpdater<>(strategy, 0, allInstances, ImmutableSet.of());
 
     evaluate(
         OneWayStatus.FAILED,
@@ -244,7 +244,7 @@ public class OneWayJobUpdaterTest extends EasyMockTest {
 
     control.replay();
 
-    jobUpdater = new OneWayJobUpdater<>(strategy, 0, allInstances);
+    jobUpdater = new OneWayJobUpdater<>(strategy, 0, allInstances, ImmutableSet.of());
 
     evaluate(
         OneWayStatus.WORKING,

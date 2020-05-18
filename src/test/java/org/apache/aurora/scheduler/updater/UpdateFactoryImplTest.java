@@ -61,13 +61,13 @@ public class UpdateFactoryImplTest {
 
   @Test
   public void testRollingForward() throws Exception  {
-    Update update = factory.newUpdate(INSTRUCTIONS, true);
+    Update update = factory.newUpdate(INSTRUCTIONS, true, ImmutableSet.of());
     assertEquals(ImmutableSet.of(0, 1, 2), update.getUpdater().getInstances());
   }
 
   @Test
   public void testRollingBack() throws Exception {
-    Update update = factory.newUpdate(INSTRUCTIONS, false);
+    Update update = factory.newUpdate(INSTRUCTIONS, false, ImmutableSet.of());
     assertEquals(ImmutableSet.of(0, 1, 2), update.getUpdater().getInstances());
   }
 
@@ -78,7 +78,7 @@ public class UpdateFactoryImplTest {
     config.setDesiredState(instanceConfig(new Range(1, 1)));
     config.getSettings().setUpdateOnlyTheseInstances(ImmutableSet.of(new Range(0, 1)));
 
-    Update update = factory.newUpdate(IJobUpdateInstructions.build(config), true);
+    Update update = factory.newUpdate(IJobUpdateInstructions.build(config), true, ImmutableSet.of());
     assertEquals(ImmutableSet.of(1), update.getUpdater().getInstances());
   }
 
@@ -89,7 +89,7 @@ public class UpdateFactoryImplTest {
     config.setDesiredState(instanceConfig(new Range(1, 1)));
     config.getSettings().setUpdateOnlyTheseInstances(ImmutableSet.of(new Range(0, 1)));
 
-    Update update = factory.newUpdate(IJobUpdateInstructions.build(config), false);
+    Update update = factory.newUpdate(IJobUpdateInstructions.build(config), false, ImmutableSet.of());
     assertEquals(ImmutableSet.of(1), update.getUpdater().getInstances());
   }
 
@@ -98,7 +98,7 @@ public class UpdateFactoryImplTest {
     JobUpdateInstructions config = INSTRUCTIONS.newBuilder();
     config.getDesiredState().setInstances(ImmutableSet.of(new Range(0, 1)));
 
-    Update update = factory.newUpdate(IJobUpdateInstructions.build(config), true);
+    Update update = factory.newUpdate(IJobUpdateInstructions.build(config), true, ImmutableSet.of());
     assertEquals(ImmutableSet.of(0, 1, 2), update.getUpdater().getInstances());
   }
 
