@@ -15,7 +15,6 @@ package org.apache.aurora.scheduler.updater;
 
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -180,7 +179,6 @@ class OneWayJobUpdater<K, T> {
     } else {
       ImmutableMap.Builder<K, SideEffect> builder = ImmutableMap.builder();
       Set<K> working = filterByStatus(instances, WORKING);
-      Set<K> failed = filterByStatus(instances, FAILED);
       Set<K> nextGroup = strategy.getNextGroup(idle, working);
       if (!nextGroup.isEmpty()) {
         for (K instance : nextGroup) {

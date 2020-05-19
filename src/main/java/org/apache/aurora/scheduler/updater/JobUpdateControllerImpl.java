@@ -582,12 +582,19 @@ class JobUpdateControllerImpl implements JobUpdateController {
         updates.remove(job);
       } else {
         checkState(!updates.containsKey(job), "Updater already exists for %s", job);
+
+        // Query storage for any instances that previously failed while rolling forward.
         prevFailedInstances = updateStore.fetchJobUpdate(key).get()
             .getInstanceEvents()
             .stream()
             .filter(e -> e.getAction() == JobUpdateAction.INSTANCE_UPDATE_FAILED)
             .map(IJobInstanceUpdateEvent::getInstanceId)
             .collect(ImmutableSet.toImmutableSet());
+        if (!prevFailedInstances.isEmpty()) {
+          LOG.info("{} update is resuming with instances {} marked as previously failed",
+              key,
+              prevFailedInstances);
+        }
       }
 
       IJobUpdate jobUpdate = updateStore.fetchJobUpdate(key).get().getUpdate();
@@ -596,13 +603,6 @@ class JobUpdateControllerImpl implements JobUpdateController {
         update = updateFactory.newUpdate(jobUpdate.getInstructions(),
             action == ROLL_FORWARD,
             prevFailedInstances);
-
-        if (prevFailedInstances.size() > 0) {
-          LOG.info("{} update is resuming and instances {} already previously failed",
-              key,
-              prevFailedInstances);
-        }
-
       } catch (RuntimeException e) {
         LOG.warn("Uncaught exception: " + e, e);
         changeJobUpdateStatus(
