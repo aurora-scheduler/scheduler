@@ -28,10 +28,6 @@ function remove_unused {
 
 function install_base_packages {
   apt-get update
-  # Needed to fix a bug related to group creation which was reported for an earlier version but
-  # seems to come back from time to time.
-  # https://issues.apache.org/jira/browse/AURORA-1781
-  apt-get -y install --install-recommends linux-generic-hwe-16.04
   apt-get -y install \
       bison \
       curl \
@@ -67,7 +63,7 @@ function install_docker {
 
 function install_docker2aci {
   DOCKER2ACI_VERSION="0.17.2"
-  GOLANG_VERSION="1.13.5"
+  GOLANG_VERSION="1.14.3"
 
   TEMP_PATH=$(mktemp -d)
   pushd "$TEMP_PATH"
