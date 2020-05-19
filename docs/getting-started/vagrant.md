@@ -43,7 +43,7 @@ Clone the Aurora repository
 
 To obtain the Aurora source distribution, clone its Git repository using the following command:
 
-     git clone git://git.apache.org/aurora.git
+     git clone https://github.com/aurora-scheduler/aurora
 
 
 Start the local cluster

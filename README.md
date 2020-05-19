@@ -11,6 +11,17 @@ running in a cluster, such as rolling upgrades.
 To very concisely describe Aurora, it is like a distributed monit or distributed supervisord that
 you can instruct to do things like _run 100 of these, somewhere, forever_.
 
+### What this project is and what it is not
+Aurora Scheduler is a reboot of Apache Aurora that seeks to continue its development after the latter entered the [Apache Attic](https://lists.apache.org/thread.html/reee926fceea75b7cc25110abb9deb3c41921c1585157a7f45c814419%40%3Cdev.aurora.apache.org%3E).
+That having been said, the project is largely in maintenance mode. We will continue to try to provide
+quality of life updates to the codebase but we don't anticipate any new large features being landed.
+
+Furthermore, as a result of the decreased amount of contributors available, focus will be turned to the scheduler.
+Anyone who depends on tooling outside of the scheduler should look at taking up maintenance of those tools.
+
+Changes made to the scheduler will always strive to be compatible with existing tools but compatibility is _not_ guaranteed.
+More importantly, in many cases we will not be testing against such tools so it is
+up to users to report incompatible changes. **Tools in this case also include the [original Python2 client](https://github.com/aurora-scheduler/client).**
 
 ## Features
 
@@ -48,27 +59,6 @@ However, if you have very specific scheduling requirements, or are building a sy
 scheduler itself, you may want to explore developing your own
 [framework](http://mesos.apache.org/documentation/latest/app-framework-development-guide).
 
-### Companies using Aurora
-Are you using Aurora too?  Let us know, or submit a patch to join the list!
-
-- [Amperity](https://amperity.com)
-- [Blue Yonder](http://www.blue-yonder.com)
-- [Boxever](http://www.boxever.com)
-- [Criteo](http://www.criteo.com)
-- [Electronic Arts](http://www.ea.com/)
-- [Fitbit](https://fitbit.com)
-- [Foursquare](https://foursquare.com)
-- [Gutefrage.net](https://www.gutefrage.net)
-- [Houghton Mifflin Harcourt](https://www.hmhco.com)
-- [Kakao](https://kakao.com/)
-- [Magine TV](https://magine.com)
-- [Medallia](http://www.medallia.com)
-- [Oscar Health](https://www.hioscar.com)
-- [PayPal](https://www.paypal.com)
-- [Sabre Labs](http://www.sabre.com)
-- [TellApart](https://www.tellapart.com)
-- [Twitter](https://twitter.com)
-- [Uber](https://www.uber.com)
 
 ## Getting Help
 If you have questions that aren't answered in our [documentation](https://aurora-scheduler.github.io/documentation/latest/),

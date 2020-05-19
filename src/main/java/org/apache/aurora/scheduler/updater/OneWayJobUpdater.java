@@ -52,6 +52,7 @@ class OneWayJobUpdater<K, T> {
 
   private final UpdateStrategy<K> strategy;
   private final int maxFailedInstances;
+  private final Set<K> prevFailedInstances;
   private final Map<K, InstanceUpdate<T>> instances;
   private final StateMachine<OneWayStatus> stateMachine =
       StateMachine.<OneWayStatus>builder("job_update")
@@ -70,14 +71,18 @@ class OneWayJobUpdater<K, T> {
    * @param maxFailedInstances Maximum tolerated failures before the update is considered failed.
    * @param instanceEvaluators Evaluate the state of individual instances, and decide what actions
    *                           must be taken to update them.
+   * @param prevFailedInstances A set of instances that previously failed before update was resumed.
+   *
    */
   OneWayJobUpdater(
       UpdateStrategy<K> strategy,
       int maxFailedInstances,
-      Map<K, StateEvaluator<T>> instanceEvaluators) {
+      Map<K, StateEvaluator<T>> instanceEvaluators,
+      Set<K> prevFailedInstances) {
 
     this.strategy = requireNonNull(strategy);
     this.maxFailedInstances = maxFailedInstances;
+    this.prevFailedInstances = ImmutableSet.copyOf(prevFailedInstances);
     requireNonNull(instanceEvaluators);
 
     this.instances = ImmutableMap.copyOf(Maps.transformEntries(
@@ -177,7 +182,19 @@ class OneWayJobUpdater<K, T> {
       Set<K> nextGroup = strategy.getNextGroup(idle, working);
       if (!nextGroup.isEmpty()) {
         for (K instance : nextGroup) {
-          builder.put(instance, instances.get(instance).evaluate(stateProvider.getState(instance)));
+          // Due to the way pause/resume work, on resume a new OneWayJobUpdater is recreated.
+          // The new OneWayJobUpdater does not have information about previously failed
+          // instances. As updates are idempotent, we re-evaluate the update which correctly
+          // evaluates successfully updated instances to a NOOP but incorrectly attempts to
+          // "re-update" previously failed instances.
+          // Here we short circuit here to avoid retrying previously failed instances.
+          if (prevFailedInstances.contains(instance)) {
+            instances.get(instance).evaluateAsPrevFailed();
+          } else {
+            builder.put(
+                instance,
+                instances.get(instance).evaluate(stateProvider.getState(instance)));
+          }
         }
         LOG.debug("Changed working set for update to " + filterByStatus(instances, WORKING));
       }
@@ -228,6 +245,11 @@ class OneWayJobUpdater<K, T> {
 
     SideEffect.InstanceUpdateStatus getState() {
       return stateMachine.getState();
+    }
+
+    void evaluateAsPrevFailed() {
+      stateMachine.transition(WORKING);
+      stateMachine.transition(FAILED);
     }
 
     SideEffect evaluate(T actualState) {

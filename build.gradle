@@ -15,8 +15,8 @@ plugins {
   id 'com.eriwen.gradle.js' version '1.12.1'
   id 'com.github.ben-manes.versions' version '0.11.3'
   id 'com.github.hierynomus.license' version '0.11.0'
-  id 'com.moowork.node' version '1.2.0'
-  id 'me.champeau.gradle.jmh' version '0.4.4'
+  id "com.github.node-gradle.node" version "1.5.3"
+  id 'me.champeau.gradle.jmh' version '0.4.8'
   id "com.github.spotbugs" version "1.6.4"
 }
 
@@ -136,10 +136,10 @@ For more details, please see https://issues.apache.org/jira/browse/AURORA-1169
  * into the resources directory of the Scheduler, so it must be built before the Scheduler.
  */
 project(':ui') {
-  apply plugin: 'com.moowork.node'
+  apply plugin: "com.github.node-gradle.node"
   node {
     download = true
-    version = '12.14.1'
+    version = '12.16.1'
   }
 
   task test_(type: NpmTask, overwrite: true) {
@@ -324,7 +324,7 @@ task enforceVersion {
 
 compileJava.dependsOn(enforceVersion);
 
-task wrapper(type: Wrapper) {
+wrapper {
   gradleVersion = project(':buildSrc').GRADLE_VERSION
 }
 
