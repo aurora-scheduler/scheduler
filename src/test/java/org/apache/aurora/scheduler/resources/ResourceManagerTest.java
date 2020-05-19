@@ -29,6 +29,7 @@ import org.apache.mesos.v1.Protos.Value.Scalar;
 import org.junit.Test;
 
 import static org.apache.aurora.gen.Resource.diskMb;
+import static org.apache.aurora.gen.Resource.ipAddr;
 import static org.apache.aurora.gen.Resource.namedPort;
 import static org.apache.aurora.gen.Resource.numCpus;
 import static org.apache.aurora.gen.Resource.numGpus;
@@ -117,6 +118,7 @@ public class ResourceManagerTest {
     AssignedTask builder = makeTask("id", JOB).newBuilder().getAssignedTask();
     builder.getTask().addToResources(namedPort("health"));
     builder.getTask().addToResources(numGpus(4));
+    builder.getTask().addToResources(ipAddr(2));
 
     assertEquals(
         EnumSet.allOf(ResourceType.class),
