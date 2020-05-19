@@ -115,7 +115,7 @@ function warm_artifact_cache {
   # Gradle caches in the user's home directory.  Since development commands
   # are executed by the vagrant user, switch to that user.
   su - vagrant -c '
-    git clone --depth 1 https://github.com/apache/aurora.git
+    git clone --depth 1 https://github.com/aurora-scheduler/aurora.git
     pushd aurora
       ./build-support/jenkins/build.sh
     popd
