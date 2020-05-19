@@ -27,4 +27,4 @@ jobs:
     - name: Install Kerberos lib
       run: sudo apt-get install libkrb5-dev
     - name: Build components
-      run: TERM=dumb ./build-support/jenkins/build.sh
+      run: TERM=dumb ./gradlew --no-daemon -Pq clean build

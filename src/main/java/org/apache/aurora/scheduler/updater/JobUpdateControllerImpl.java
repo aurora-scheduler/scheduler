@@ -202,7 +202,7 @@ class JobUpdateControllerImpl implements JobUpdateController {
       IJobKey job = summary.getKey().getJob();
 
       // Validate the update configuration by making sure we can create an updater for it.
-      updateFactory.newUpdate(update.getInstructions(), true);
+      updateFactory.newUpdate(update.getInstructions(), true, ImmutableSet.of());
 
       if (instructions.getInitialState().isEmpty() && !instructions.isSetDesiredState()) {
         throw new IllegalArgumentException("Update instruction is a no-op.");
@@ -577,16 +577,32 @@ class JobUpdateControllerImpl implements JobUpdateController {
     if (action == STOP_WATCHING) {
       updates.remove(job);
     } else if (action == ROLL_FORWARD || action == ROLL_BACK) {
+      Set<Integer> prevFailedInstances = ImmutableSet.of();
       if (action == ROLL_BACK) {
         updates.remove(job);
       } else {
         checkState(!updates.containsKey(job), "Updater already exists for %s", job);
+
+        // Query storage for any instances that previously failed while rolling forward.
+        prevFailedInstances = updateStore.fetchJobUpdate(key).get()
+            .getInstanceEvents()
+            .stream()
+            .filter(e -> e.getAction() == JobUpdateAction.INSTANCE_UPDATE_FAILED)
+            .map(IJobInstanceUpdateEvent::getInstanceId)
+            .collect(ImmutableSet.toImmutableSet());
+        if (!prevFailedInstances.isEmpty()) {
+          LOG.info("{} update is resuming with instances {} marked as previously failed",
+              key,
+              prevFailedInstances);
+        }
       }
 
       IJobUpdate jobUpdate = updateStore.fetchJobUpdate(key).get().getUpdate();
       UpdateFactory.Update update;
       try {
-        update = updateFactory.newUpdate(jobUpdate.getInstructions(), action == ROLL_FORWARD);
+        update = updateFactory.newUpdate(jobUpdate.getInstructions(),
+            action == ROLL_FORWARD,
+            prevFailedInstances);
       } catch (RuntimeException e) {
         LOG.warn("Uncaught exception: " + e, e);
         changeJobUpdateStatus(

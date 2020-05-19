@@ -120,6 +120,21 @@ public enum ResourceType implements TEnum {
       "core(s)",
       4,
       false,
+      NOT_REVOCABLE),
+
+  /**
+   * IP resource.
+   */
+  IP_ADDR(
+      _Fields.IP_ADDR,
+      SCALAR,
+      "ips",
+      LONG,
+      Optional.empty(),
+      "IP",
+      "address(es)",
+      128,
+      false,
       NOT_REVOCABLE);
 
   public static void initializeEmptyCliArgsForTest() {
