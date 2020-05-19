@@ -153,7 +153,7 @@ public class OneWayJobUpdaterTest extends EasyMockTest {
 
     control.replay();
 
-    jobUpdater = new OneWayJobUpdater<>(strategy, 0, allInstances);
+    jobUpdater = new OneWayJobUpdater<>(strategy, 0, allInstances, ImmutableSet.of());
 
     evaluate(
         OneWayStatus.WORKING,
@@ -204,7 +204,7 @@ public class OneWayJobUpdaterTest extends EasyMockTest {
 
     control.replay();
 
-    jobUpdater = new OneWayJobUpdater<>(strategy, 0, allInstances);
+    jobUpdater = new OneWayJobUpdater<>(strategy, 0, allInstances, ImmutableSet.of());
 
     evaluate(
         OneWayStatus.FAILED,
@@ -244,7 +244,7 @@ public class OneWayJobUpdaterTest extends EasyMockTest {
 
     control.replay();
 
-    jobUpdater = new OneWayJobUpdater<>(strategy, 0, allInstances);
+    jobUpdater = new OneWayJobUpdater<>(strategy, 0, allInstances, ImmutableSet.of());
 
     evaluate(
         OneWayStatus.WORKING,
@@ -259,6 +259,36 @@ public class OneWayJobUpdaterTest extends EasyMockTest {
         s0,
         OneWayStatus.WORKING,
         ImmutableMap.of());
+  }
+
+  @Test
+  public void testEvaluatePreviouslyFailedInstance() {
+    expect(strategy.getNextGroup(ImmutableSet.of(0, 1, 2, 3), EMPTY))
+        .andReturn(ImmutableSet.of(0));
+    expect(strategy.getNextGroup(ImmutableSet.of(1, 2, 3), EMPTY))
+        .andReturn(ImmutableSet.of(1));
+    expect(strategy.getNextGroup(ImmutableSet.of(2, 3), ImmutableSet.of(1)))
+        .andReturn(ImmutableSet.of());
+    String s0 = "0";
+    String s1 = "1";
+
+    // We don't evaluate instance 0 because we're passing it in as a previously failed
+    // instance.
+    expectFetchAndEvaluate(1, instance1, s1, EVALUATE_ON_STATE_CHANGE);
+
+    control.replay();
+
+    jobUpdater = new OneWayJobUpdater<>(strategy, 1, allInstances, ImmutableSet.of(0));
+
+    evaluate(
+        OneWayStatus.WORKING,
+        ImmutableMap.of(1, sideEffect(AWAIT_STATE_CHANGE, InstanceUpdateStatus.WORKING)));
+
+    // Instance 0 previously failed so it should result in a NOOP even without evaluation.
+    evaluate(0, s0, OneWayStatus.WORKING, ImmutableMap.of());
+
+    // Reset global OneWayJobUpdater object
+    jobUpdater = new OneWayJobUpdater<>(strategy, 0, allInstances, ImmutableSet.of(0));
   }
 
   @Test
