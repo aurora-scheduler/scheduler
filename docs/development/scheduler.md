@@ -86,6 +86,33 @@ Gradle can generate project files for your IDE. To generate an IntelliJ IDEA pro
 
 and import the generated `aurora.ipr` file.
 
+Setting up docker-compose based dev cluster
+-----------------
+In order to set up a docker-compose based dev cluster for the scheduler, you need to
+[install docker-compose](https://docs.docker.com/compose/install/) on your machine.
+
+Run gradle to generate the installDist
+
+    ./gradlew installDist
+
+From the root of the Git repo bring up the cluster using docker-compose
+
+    docker-compose up -d
+
+Aurora components should now be reachable at:
+
+* Scheduler: http://localhost:8081
+* Mesos Master: http://localhost:5050
+* Mesos Agent: http://localhost:5061
+
+To apply any new changes to the scheduler simply run
+
+    ./gradlew compileJava && docker-compose restart
+
+Note that certain limitations apply to developing the scheduler using a docker based
+cluster. Such use-cases will probably involve launching other containers. 
+In such cases, it is more advisable to our vagrant setup as it will run a full fledged VM.
+
 Adding or Upgrading a Dependency
 --------------------------------
 New dependencies can be added from Maven central by adding a `compile` dependency to `build.gradle`.
