@@ -17,7 +17,7 @@ set -o errexit
 set -o nounset
 set -o verbose
 
-readonly MESOS_VERSION=1.6.1
+readonly MESOS_VERSION=1.7.2
 
 function remove_unused {
   # The default bento/ubuntu-16.04 image includes juju-core, which adds ~300 MB to our image.
@@ -63,7 +63,7 @@ function install_docker {
 
 function install_docker2aci {
   DOCKER2ACI_VERSION="0.17.2"
-  GOLANG_VERSION="1.11"
+  GOLANG_VERSION="1.14.3"
 
   TEMP_PATH=$(mktemp -d)
   pushd "$TEMP_PATH"
@@ -115,7 +115,7 @@ function warm_artifact_cache {
   # Gradle caches in the user's home directory.  Since development commands
   # are executed by the vagrant user, switch to that user.
   su - vagrant -c '
-    git clone --depth 1 https://github.com/apache/aurora.git
+    git clone --depth 1 https://github.com/aurora-scheduler/aurora.git
     pushd aurora
       ./build-support/jenkins/build.sh
     popd

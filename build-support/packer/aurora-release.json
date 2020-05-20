@@ -29,7 +29,7 @@
     },
     {
       "type": "vagrant-cloud",
-      "box_tag": "apache-aurora/dev-environment",
+      "box_tag": "aurora-scheduler/dev-environment",
       "access_token": "{{user `cloud_token`}}",
       "version": "{{user `version`}}"
     }
