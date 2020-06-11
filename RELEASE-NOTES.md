@@ -4,6 +4,7 @@
 ### New/updated:
 - Updated to Mesos 1.7.2.
 - Updated node dependencies.
+- Bumped up Node version to 12.18.0
 - Updated Quartz Scheduler to 2.3.1
 - Improved the way Updates handle paused/resumed updates where instance updates previously
   failed. Previously, upon resuming a paused update, previously failed updates would be retried.
