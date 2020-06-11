@@ -474,6 +474,16 @@ public class CommandLineTest {
             "-thermos_executor_resources=''");
 
     assertEquals(ImmutableList.of(), parsed.executor.thermosExecutorResources);
+
+    parsed = CommandLine.parseOptions(
+            "-cluster_name=testing",
+            "-mesos_master_address=testing",
+            "-backup_dir=testing",
+            "-serverset_path=testing",
+            "-zk_endpoints=testing:42",
+            "-thermos_executor_resources=''");
+
+    assertEquals(ImmutableList.of(), parsed.executor.thermosExecutorResources);
   }
 
   private static void assertEqualOptions(CliOptions expected, CliOptions actual) {
