@@ -99,8 +99,8 @@ public final class CommandLine {
 
       @SuppressWarnings("unchecked")
       @Override
-      public <T> Class<? extends IStringConverter<T>> getConverter(Class<T> forType) {
-        return (Class<IStringConverter<T>>) classConverters.get(forType);
+      public Class<? extends IStringConverter<?>> getConverter(Class<?> forType) {
+        return classConverters.get(forType);
       }
     });
 

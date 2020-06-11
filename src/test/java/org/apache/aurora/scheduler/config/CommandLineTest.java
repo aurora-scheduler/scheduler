@@ -454,15 +454,16 @@ public class CommandLineTest {
 
     // Test other ways in which an empty list can be passed
     // as thermos executor resources such as "" and ''.
+    final String emptyQuotes = "\"\"";
     parsed = CommandLine.parseOptions(
             "-cluster_name=testing",
             "-mesos_master_address=testing",
             "-backup_dir=testing",
             "-serverset_path=testing",
             "-zk_endpoints=testing:42",
-            "-thermos_executor_resources=\"\"");
+            "-thermos_executor_resources=" + emptyQuotes);
 
-    assertEquals(ImmutableList.of(), parsed.executor.thermosExecutorResources);
+    assertEquals(ImmutableList.of(emptyQuotes), parsed.executor.thermosExecutorResources);
 
     parsed = CommandLine.parseOptions(
             "-cluster_name=testing",
