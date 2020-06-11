@@ -3,6 +3,21 @@
 
 ### New/updated:
 - Updated to Mesos 1.7.2.
+- Updated node dependencies.
+- Bumped up Node version to 12.18.0
+- Updated Quartz Scheduler to 2.3.1
+- Updated Gradle to version 5.0
+- Improved the way Updates handle paused/resumed updates where instance updates previously
+  failed. Previously, upon resuming a paused update, previously failed updates would be retried.
+  This would make updates take longer than expected, specifically when using the auto-pause
+  mechanism.
+- Modified auto-pause mechanism to address a corner case where the status of an instance in a batch
+  would not enter a terminal state before the batch was paused. This resulted in undesired behavior
+  when the updated was resumed if that instance update had failed. 
+- Auto-pause update mechanism now makes sure all instances have entered a terminal state 
+  [SUCCEDED, FAILED] before pausing the update. With this change, the final pause to 
+  acknowledge an update had sucessfully completed has also been dropped.
+- Support has been added to use a resource with the key ips from Mesos.
 
 0.22.0
 ======
