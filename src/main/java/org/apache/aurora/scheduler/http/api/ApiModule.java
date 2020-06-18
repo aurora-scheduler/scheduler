@@ -14,6 +14,7 @@
 package org.apache.aurora.scheduler.http.api;
 
 import java.nio.charset.StandardCharsets;
+
 import javax.inject.Singleton;
 
 import com.beust.jcommander.Parameter;

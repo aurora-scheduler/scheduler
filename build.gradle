@@ -426,7 +426,7 @@ codeQualityTasks.each {
 
 checkstyle {
   sourceSets = [sourceSets.main , sourceSets.test, sourceSets.jmh]
-  toolVersion = '7.3'
+  toolVersion = '8.1'
 }
 
 spotbugs {

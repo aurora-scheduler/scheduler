@@ -44,7 +44,6 @@ import org.junit.Before;
 import org.junit.Test;
 
 import static org.apache.aurora.gen.Resource.numCpus;
-
 import static org.junit.Assert.assertEquals;
 
 public class NearestFitTest {

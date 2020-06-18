@@ -14,6 +14,7 @@
 package org.apache.aurora.scheduler.state;
 
 import java.util.List;
+
 import javax.inject.Singleton;
 
 import com.beust.jcommander.Parameter;

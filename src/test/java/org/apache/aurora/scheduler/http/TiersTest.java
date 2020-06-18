@@ -15,6 +15,7 @@ package org.apache.aurora.scheduler.http;
 
 import java.io.IOException;
 import java.util.Map;
+
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.core.Response;
 

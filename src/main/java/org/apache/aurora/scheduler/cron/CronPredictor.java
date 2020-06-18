@@ -14,7 +14,6 @@
 package org.apache.aurora.scheduler.cron;
 
 import java.util.Date;
-
 import java.util.Optional;
 
 /**

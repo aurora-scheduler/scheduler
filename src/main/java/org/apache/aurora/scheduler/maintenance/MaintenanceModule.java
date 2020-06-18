@@ -14,6 +14,7 @@
 package org.apache.aurora.scheduler.maintenance;
 
 import java.util.concurrent.ScheduledExecutorService;
+
 import javax.inject.Singleton;
 
 import com.beust.jcommander.Parameter;
