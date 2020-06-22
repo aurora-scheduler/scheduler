@@ -19,8 +19,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import javax.annotation.Nullable;
-
 import com.google.common.base.Function;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableList;
@@ -520,9 +518,9 @@ public class ReadOnlySchedulerImplTest extends EasyMockTest {
 
   private static final Function<ScheduledTask, Integer> TO_INSTANCE_ID =
       new Function<ScheduledTask, Integer>() {
-        @Nullable
+
         @Override
-        public Integer apply(@Nullable ScheduledTask input) {
+        public Integer apply(ScheduledTask input) {
           return input.getAssignedTask().getInstanceId();
         }
       };

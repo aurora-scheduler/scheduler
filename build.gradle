@@ -17,7 +17,7 @@ plugins {
   id 'com.github.hierynomus.license' version '0.11.0'
   id "com.github.node-gradle.node" version "1.5.3"
   id 'me.champeau.gradle.jmh' version '0.4.8'
-  id "com.github.spotbugs" version "4.0.1"
+  id "com.github.spotbugs" version "4.2.0"
 }
 
 apply plugin: 'application'
@@ -431,8 +431,7 @@ checkstyle {
 
 spotbugs {
   effort = 'max'
-  excludeFilter = file('config/spotbugs/excludeFilter.xml')
-  maxHeapSize = '1g'
+  toolVersion = '4.0.1'
 }
 
 tasks.withType(com.github.spotbugs.snom.SpotBugsTask) {
@@ -440,6 +439,8 @@ tasks.withType(com.github.spotbugs.snom.SpotBugsTask) {
     xml.enabled = false
     html.enabled = true
   }
+  excludeFilter = file('config/spotbugs/excludeFilter.xml')
+  maxHeapSize = '1g'
 }
 
 pmd {
