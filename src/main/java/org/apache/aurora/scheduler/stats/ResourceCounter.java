@@ -23,6 +23,7 @@ import javax.inject.Inject;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Function;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
 import com.google.common.cache.CacheBuilder;
@@ -137,7 +138,7 @@ public class ResourceCounter {
           }
         });
     for (ITaskConfig task : Iterables.filter(getTasks(query), filter)) {
-      metrics.getUnchecked(keyFunction.apply(task)).accumulate(task);
+      metrics.getUnchecked(Preconditions.checkNotNull(keyFunction.apply(task))).accumulate(task);
     }
     return metrics.asMap();
   }
@@ -179,7 +180,7 @@ public class ResourceCounter {
 
     void accumulate(ITaskConfig task) {
       if (type.filter.apply(task)) {
-        bag = bag.add(QUOTA_RESOURCES.apply(task));
+        bag = bag.add(Preconditions.checkNotNull(QUOTA_RESOURCES.apply(task)));
       }
     }
 

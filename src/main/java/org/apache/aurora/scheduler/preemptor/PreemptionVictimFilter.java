@@ -23,6 +23,7 @@ import javax.inject.Inject;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Function;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
@@ -193,7 +194,8 @@ public interface PreemptionVictimFilter {
       Set<PreemptionVictim> toPreemptTasks = Sets.newHashSet();
       for (PreemptionVictim victim : sortedVictims) {
         toPreemptTasks.add(victim);
-        totalResource = totalResource.add(victimToResources.apply(victim));
+        totalResource = totalResource
+                .add(Preconditions.checkNotNull(victimToResources.apply(victim)));
 
         Set<Veto> vetoes = schedulingFilter.filter(
             new UnusedResource(totalResource, attributes.get(), unavailability),

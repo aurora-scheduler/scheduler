@@ -25,6 +25,7 @@ import javax.inject.Provider;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Function;
+import com.google.common.base.Preconditions;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -278,11 +279,13 @@ class ShiroAuthorizingParamInterceptor implements MethodInterceptor {
 
     Method method = invocation.getMethod();
     Subject subject = subjectProvider.get();
+    Preconditions.checkNotNull(method);
+    Optional<JobKey> key = authorizingParamGetters
+            .getUnchecked(method)
+            .apply(invocation.getArguments());
 
-    Optional<IJobKey> jobKey = authorizingParamGetters
-        .getUnchecked(invocation.getMethod())
-        .apply(invocation.getArguments())
-        .map(IJobKey::build);
+    Optional<IJobKey> jobKey = key != null && key.isPresent()
+            ? Optional.of(IJobKey.build(key.get())) : Optional.empty();
     if (jobKey.isPresent() && JobKeys.isValid(jobKey.get())) {
       Permission targetPermission = makeTargetPermission(method.getName(), jobKey.get());
       if (subject.isPermitted(targetPermission)) {

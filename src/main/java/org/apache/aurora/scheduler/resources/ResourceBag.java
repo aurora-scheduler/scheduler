@@ -20,7 +20,10 @@ import java.util.function.BinaryOperator;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
+import javax.annotation.Nonnull;
+
 import com.google.common.base.MoreObjects;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
 
@@ -119,6 +122,7 @@ public class ResourceBag {
    * @return Result of addition.
    */
   public ResourceBag add(ResourceBag other) {
+    Preconditions.checkNotNull(other);
     return binaryOp(other, (l, r) -> l + r);
   }
 
@@ -128,7 +132,8 @@ public class ResourceBag {
    * @param other Other bag to subtract.
    * @return Result of subtraction.
    */
-  public ResourceBag subtract(ResourceBag other) {
+  public ResourceBag subtract(@Nonnull ResourceBag other) {
+    Preconditions.checkNotNull(other);
     return binaryOp(other, (l, r) -> l - r);
   }
 
@@ -140,7 +145,8 @@ public class ResourceBag {
    * @param other Other bag to divide by.
    * @return Result of division.
    */
-  public ResourceBag divide(ResourceBag other) {
+  public ResourceBag divide(@Nonnull ResourceBag other) {
+    Preconditions.checkNotNull(other);
     return binaryOp(other, (l, r) -> l / r);
   }
 
@@ -150,7 +156,8 @@ public class ResourceBag {
    * @param other Other bag to compare with.
    * @return A new bag with max resource vectors.
    */
-  public ResourceBag max(ResourceBag other) {
+  public ResourceBag max(@Nonnull ResourceBag other) {
+    Preconditions.checkNotNull(other);
     return binaryOp(other, (l, r) -> Math.max(l, r));
   }
 

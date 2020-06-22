@@ -48,6 +48,8 @@ import org.apache.mesos.Log;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
 import static java.lang.annotation.ElementType.METHOD;
 import static java.lang.annotation.ElementType.PARAMETER;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
@@ -91,7 +93,6 @@ public class MesosLog implements org.apache.aurora.scheduler.log.Log {
 
   private final Provider<WriterInterface> writerFactory;
   private final Amount<Long, Time> writeTimeout;
-
   private final byte[] noopEntry;
 
   private final Lifecycle lifecycle;
@@ -108,6 +109,7 @@ public class MesosLog implements org.apache.aurora.scheduler.log.Log {
    * @param lifecycle Lifecycle to use for initiating application teardown.
    */
   @Inject
+  @SuppressFBWarnings("EI2") // Suppress EI2 warning for noopEntry
   public MesosLog(
       Provider<LogInterface> logFactory,
       Provider<ReaderInterface> readerFactory,
@@ -124,7 +126,6 @@ public class MesosLog implements org.apache.aurora.scheduler.log.Log {
 
     this.writerFactory = requireNonNull(writerFactory);
     this.writeTimeout = requireNonNull(writeTimeout);
-
     this.noopEntry = requireNonNull(noopEntry);
 
     this.lifecycle = requireNonNull(lifecycle);

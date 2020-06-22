@@ -459,7 +459,8 @@ public interface QuotaManager {
     }
 
     private static ResourceBag scale(ITaskConfig taskConfig, int instanceCount) {
-      return QUOTA_RESOURCES.apply(taskConfig).scale(instanceCount);
+      ResourceBag resourceBag = Preconditions.checkNotNull(QUOTA_RESOURCES.apply(taskConfig));
+      return resourceBag.scale(instanceCount);
     }
 
     private static ResourceBag scale(IJobConfiguration jobConfiguration) {
