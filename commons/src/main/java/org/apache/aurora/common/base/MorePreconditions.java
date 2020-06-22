@@ -16,7 +16,7 @@ package org.apache.aurora.common.base;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterables;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 
 /**
  * A utility helpful in concisely checking preconditions on arguments.  This utility is a complement

@@ -17,7 +17,7 @@ import java.net.InetSocketAddress;
 
 import com.google.common.base.Preconditions;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 
 /**
  * A utility that can parse [host]:[port] pairs or :[port] designators into instances of

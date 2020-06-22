@@ -17,7 +17,7 @@ import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 
 import org.apache.aurora.common.base.MorePreconditions;
-import org.apache.commons.lang.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.EqualsBuilder;
 
 import static java.util.Objects.requireNonNull;
 
