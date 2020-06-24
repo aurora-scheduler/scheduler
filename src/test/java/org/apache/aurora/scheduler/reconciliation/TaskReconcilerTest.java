@@ -18,7 +18,6 @@ import java.util.Optional;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicLong;
 
-import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
@@ -102,8 +101,8 @@ public class TaskReconcilerTest extends EasyMockTest {
         task2).times(7);
 
     List<List<Protos.TaskStatus>> batches = Lists.partition(ImmutableList.of(
-            Preconditions.checkNotNull(TASK_TO_PROTO.apply(task1)),
-        Preconditions.checkNotNull(TASK_TO_PROTO.apply(task2))), BATCH_SIZE);
+        TASK_TO_PROTO.apply(task1),
+        TASK_TO_PROTO.apply(task2)), BATCH_SIZE);
 
     driver.reconcileTasks(batches.get(0));
     expectLastCall().times(7);

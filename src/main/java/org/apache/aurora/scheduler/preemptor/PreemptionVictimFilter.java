@@ -14,16 +14,17 @@
 package org.apache.aurora.scheduler.preemptor;
 
 import java.time.Instant;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 import javax.inject.Inject;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Function;
-import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
@@ -147,8 +148,8 @@ public interface PreemptionVictimFilter {
       }
     };
 
-    private final Ordering<PreemptionVictim> resourceOrder =
-        ORDER.onResultOf(victimToResources).reverse();
+    private final Comparator<PreemptionVictim> resourceOrder =
+        Comparator.comparing(victimToResources, ORDER).reversed();
 
     @Override
     public Optional<ImmutableSet<PreemptionVictim>> filterPreemptionVictims(
@@ -170,7 +171,9 @@ public interface PreemptionVictimFilter {
       // This enforces the precondition that all of the resources are from the same host. We need to
       // get the host for the schedulingFilter.
       Set<String> hosts = ImmutableSet.<String>builder()
-          .addAll(Iterables.transform(possibleVictims, VICTIM_TO_HOST))
+          .addAll(StreamSupport
+              .stream(possibleVictims.spliterator(), false)
+              .map(VICTIM_TO_HOST).collect(Collectors.toSet()))
           .addAll(offer.map(OFFER_TO_HOST).map(ImmutableSet::of).orElse(ImmutableSet.of()))
           .build();
 
@@ -194,8 +197,7 @@ public interface PreemptionVictimFilter {
       Set<PreemptionVictim> toPreemptTasks = Sets.newHashSet();
       for (PreemptionVictim victim : sortedVictims) {
         toPreemptTasks.add(victim);
-        totalResource = totalResource
-                .add(Preconditions.checkNotNull(victimToResources.apply(victim)));
+        totalResource = totalResource.add(victimToResources.apply(victim));
 
         Set<Veto> vetoes = schedulingFilter.filter(
             new UnusedResource(totalResource, attributes.get(), unavailability),

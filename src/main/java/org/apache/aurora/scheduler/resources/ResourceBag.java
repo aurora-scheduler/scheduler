@@ -121,7 +121,7 @@ public class ResourceBag {
    * @param other Other bag to add.
    * @return Result of addition.
    */
-  public ResourceBag add(ResourceBag other) {
+  public ResourceBag add(@Nonnull ResourceBag other) {
     Preconditions.checkNotNull(other);
     return binaryOp(other, (l, r) -> l + r);
   }

@@ -17,19 +17,17 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import javax.inject.Inject;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Function;
-import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
-import com.google.common.collect.FluentIterable;
 import com.google.common.collect.Iterables;
 
 import org.apache.aurora.scheduler.base.Query;
@@ -72,9 +70,9 @@ public class ResourceCounter {
    * @throws StorageException if there was a problem fetching tasks from storage.
    */
   public List<Metric> computeConsumptionTotals() throws StorageException {
-    List<Metric> counts = FluentIterable.from(Arrays.asList(MetricType.values()))
-        .transform(TO_METRIC)
-        .toList();
+    List<Metric> counts = Arrays.stream(MetricType.values())
+        .map(TO_METRIC)
+        .collect(Collectors.toList());
 
     for (ITaskConfig task : getTasks(Query.unscoped().active())) {
       for (Metric count : counts) {
@@ -138,7 +136,7 @@ public class ResourceCounter {
           }
         });
     for (ITaskConfig task : Iterables.filter(getTasks(query), filter)) {
-      metrics.getUnchecked(Preconditions.checkNotNull(keyFunction.apply(task))).accumulate(task);
+      metrics.getUnchecked(keyFunction.apply(task)).accumulate(task);
     }
     return metrics.asMap();
   }
@@ -180,7 +178,7 @@ public class ResourceCounter {
 
     void accumulate(ITaskConfig task) {
       if (type.filter.apply(task)) {
-        bag = bag.add(Preconditions.checkNotNull(QUOTA_RESOURCES.apply(task)));
+        bag = bag.add(QUOTA_RESOURCES.apply(task));
       }
     }
 
