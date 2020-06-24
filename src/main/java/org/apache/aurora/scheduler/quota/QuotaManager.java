@@ -360,8 +360,7 @@ public interface QuotaManager {
           compose(configFilter, IInstanceTaskConfig::getTask);
 
       ResourceBag updateConsumption =
-          addAll(updatesByKey
-              .values()
+          addAll(updatesByKey.values()
               .stream()
               .map(updateResources(instanceFilter))
               .collect(Collectors.toList()));

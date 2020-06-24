@@ -6,7 +6,11 @@
 - Updated node dependencies.
 - Bumped up Node version to 12.18.0
 - Updated Quartz Scheduler to 2.3.1
-- Updated Gradle to version 5.0
+- Updated Gradle to version 5.6.4
+- Updated Guava to 29.0-jre
+- Updated SpotBugs to 4.2.0
+- Updated Commons to 3.10
+- Updated Guice to 4.2.3
 - Improved the way Updates handle paused/resumed updates where instance updates previously
   failed. Previously, upon resuming a paused update, previously failed updates would be retried.
   This would make updates take longer than expected, specifically when using the auto-pause

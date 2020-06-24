@@ -171,8 +171,7 @@ public interface PreemptionVictimFilter {
       // This enforces the precondition that all of the resources are from the same host. We need to
       // get the host for the schedulingFilter.
       Set<String> hosts = ImmutableSet.<String>builder()
-          .addAll(StreamSupport
-              .stream(possibleVictims.spliterator(), false)
+          .addAll(StreamSupport.stream(possibleVictims.spliterator(), false)
               .map(VICTIM_TO_HOST).collect(Collectors.toSet()))
           .addAll(offer.map(OFFER_TO_HOST).map(ImmutableSet::of).orElse(ImmutableSet.of()))
           .build();
