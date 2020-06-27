@@ -17,6 +17,7 @@ import java.util.Set;
 
 import javax.inject.Singleton;
 
+import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.Service;
 import com.google.common.util.concurrent.ServiceManager;
 import com.google.inject.AbstractModule;
@@ -74,7 +75,7 @@ public class SchedulerServicesModule extends AbstractModule {
       LifecycleShutdownListener listener) {
 
     ServiceManager manager = new ServiceManager(services);
-    manager.addListener(listener);
+    manager.addListener(listener, MoreExecutors.directExecutor());
     return GuavaUtils.serviceManager(manager);
   }
 
@@ -86,7 +87,7 @@ public class SchedulerServicesModule extends AbstractModule {
       LifecycleShutdownListener listener) {
 
     ServiceManager manager = new ServiceManager(services);
-    manager.addListener(listener);
+    manager.addListener(listener, MoreExecutors.directExecutor());
     return GuavaUtils.serviceManager(manager);
   }
 }

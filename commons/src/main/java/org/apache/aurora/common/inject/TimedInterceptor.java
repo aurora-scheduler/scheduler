@@ -30,7 +30,7 @@ import org.aopalliance.intercept.MethodInterceptor;
 import org.aopalliance.intercept.MethodInvocation;
 import org.apache.aurora.common.stats.SlidingStats;
 import org.apache.aurora.common.stats.TimeSeriesRepository;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 
 /**
  * A method interceptor that exports timing information for methods annotated with

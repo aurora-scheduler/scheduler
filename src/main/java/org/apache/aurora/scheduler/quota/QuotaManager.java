@@ -17,11 +17,11 @@ import java.util.EnumSet;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
 import com.google.common.collect.FluentIterable;
@@ -360,7 +360,10 @@ public interface QuotaManager {
           compose(configFilter, IInstanceTaskConfig::getTask);
 
       ResourceBag updateConsumption =
-          addAll(Iterables.transform(updatesByKey.values(), updateResources(instanceFilter)));
+          addAll(updatesByKey.values()
+              .stream()
+              .map(updateResources(instanceFilter))
+              .collect(Collectors.toList()));
 
       return nonUpdateConsumption.add(updateConsumption);
     }
@@ -419,7 +422,8 @@ public interface QuotaManager {
     private static ResourceBag instructionsToResources(
         Iterable<IInstanceTaskConfig> instructions) {
 
-      return addAll(FluentIterable.from(instructions).transform(INSTANCE_RESOURCES));
+      return addAll(StreamSupport.stream(instructions.spliterator(), false)
+           .map(INSTANCE_RESOURCES).collect(Collectors.toList()));
     }
 
     /**
@@ -459,7 +463,8 @@ public interface QuotaManager {
     }
 
     private static ResourceBag scale(ITaskConfig taskConfig, int instanceCount) {
-      return QUOTA_RESOURCES.apply(taskConfig).scale(instanceCount);
+      ResourceBag resourceBag = QUOTA_RESOURCES.apply(taskConfig);
+      return resourceBag.scale(instanceCount);
     }
 
     private static ResourceBag scale(IJobConfiguration jobConfiguration) {
@@ -467,7 +472,8 @@ public interface QuotaManager {
     }
 
     private static ResourceBag fromTasks(Iterable<ITaskConfig> tasks) {
-      return addAll(Iterables.transform(tasks, QUOTA_RESOURCES));
+      return addAll(StreamSupport.stream(tasks.spliterator(), false)
+          .map(QUOTA_RESOURCES).collect(Collectors.toList()));
     }
 
     private static int getUpdateInstanceCount(Set<IRange> ranges) {

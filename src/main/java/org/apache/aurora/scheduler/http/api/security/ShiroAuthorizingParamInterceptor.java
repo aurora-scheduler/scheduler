@@ -19,12 +19,13 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Function;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Function;
+import com.google.common.base.Preconditions;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -278,11 +279,11 @@ class ShiroAuthorizingParamInterceptor implements MethodInterceptor {
 
     Method method = invocation.getMethod();
     Subject subject = subjectProvider.get();
-
+    Preconditions.checkNotNull(method);
     Optional<IJobKey> jobKey = authorizingParamGetters
-        .getUnchecked(invocation.getMethod())
-        .apply(invocation.getArguments())
-        .map(IJobKey::build);
+            .getUnchecked(method)
+            .apply(invocation.getArguments())
+            .map(k -> IJobKey.build(k));
     if (jobKey.isPresent() && JobKeys.isValid(jobKey.get())) {
       Permission targetPermission = makeTargetPermission(method.getName(), jobKey.get());
       if (subject.isPermitted(targetPermission)) {

@@ -17,11 +17,9 @@ import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import javax.annotation.Nullable;
-
-import com.google.common.base.Function;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
@@ -499,12 +497,12 @@ public class ReadOnlySchedulerImplTest extends EasyMockTest {
     Response page2Response = assertOkResponse(thrift.getTasksStatus(page2Query));
     Response page3Response = assertOkResponse(thrift.getTasksStatus(page3Query));
 
-    Iterable<Integer> page1Ids = Lists.newArrayList(Iterables.transform(
-        page1Response.getResult().getScheduleStatusResult().getTasks(), TO_INSTANCE_ID));
-    Iterable<Integer> page2Ids = Lists.newArrayList(Iterables.transform(
-        page2Response.getResult().getScheduleStatusResult().getTasks(), TO_INSTANCE_ID));
-    Iterable<Integer> page3Ids = Lists.newArrayList(Iterables.transform(
-        page3Response.getResult().getScheduleStatusResult().getTasks(), TO_INSTANCE_ID));
+    Iterable<Integer> page1Ids = page1Response.getResult().getScheduleStatusResult()
+        .getTasks().stream().map(TO_INSTANCE_ID).collect(Collectors.toList());
+    Iterable<Integer> page2Ids = page2Response.getResult().getScheduleStatusResult()
+        .getTasks().stream().map(TO_INSTANCE_ID).collect(Collectors.toList());
+    Iterable<Integer> page3Ids = page3Response.getResult().getScheduleStatusResult()
+        .getTasks().stream().map(TO_INSTANCE_ID).collect(Collectors.toList());
 
     assertEquals(Lists.newArrayList(0, 1, 2, 3), page1Ids);
     assertEquals(Lists.newArrayList(4, 5, 6, 7), page2Ids);
@@ -519,13 +517,7 @@ public class ReadOnlySchedulerImplTest extends EasyMockTest {
   }
 
   private static final Function<ScheduledTask, Integer> TO_INSTANCE_ID =
-      new Function<ScheduledTask, Integer>() {
-        @Nullable
-        @Override
-        public Integer apply(@Nullable ScheduledTask input) {
-          return input.getAssignedTask().getInstanceId();
-        }
-      };
+      input -> input.getAssignedTask().getInstanceId();
 
   @Test
   public void testGetConfigSummary() throws Exception {

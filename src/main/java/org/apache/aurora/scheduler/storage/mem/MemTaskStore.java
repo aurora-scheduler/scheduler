@@ -25,12 +25,13 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import javax.inject.Inject;
 import javax.inject.Qualifier;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
 import com.google.common.base.Supplier;
@@ -163,7 +164,7 @@ class MemTaskStore implements TaskStore.Mutable {
     Preconditions.checkState(Tasks.ids(newTasks).size() == newTasks.size(),
         "Proposed new tasks would create task ID collision.");
 
-    Iterable<Task> canonicalized = Iterables.transform(newTasks, toTask);
+    Iterable<Task> canonicalized = newTasks.stream().map(toTask).collect(Collectors.toList());
     tasks.putAll(Maps.uniqueIndex(canonicalized, task -> Tasks.id(task.storedTask)));
     for (SecondaryIndex<?> index : secondaryIndices) {
       index.insert(Iterables.transform(canonicalized, task -> task.storedTask));
