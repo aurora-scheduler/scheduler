@@ -73,7 +73,7 @@ export class InstanceEvent extends React.Component {
       {stateMachine}
     </div>);
   }
-};
+}
 
 export default function UpdateInstanceEvents({ update }) {
   const sortedEvents = sort(update.instanceEvents, (e) => e.timestampMs, true);

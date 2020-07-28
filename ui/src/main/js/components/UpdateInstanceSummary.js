@@ -12,7 +12,7 @@ function UpdateStats({ update }) {
       {stats.instancesUpdated} / {stats.totalInstancesToBeUpdated} ({stats.progress}%)
     </span>
   </div>);
-};
+}
 
 export default function UpdateInstanceSummary({ update }) {
   return (<div>

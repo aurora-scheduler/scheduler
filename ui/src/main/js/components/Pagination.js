@@ -36,7 +36,7 @@ export default class Pagination extends React.Component {
     this.state = {page: props.page || 1};
   }
 
-  componentWillReceiveProps(nextProps) {
+  UNSAFE_componentWillReceiveProps(nextProps) {
     // Make sure to reset page when props change (caused by data change or sort change or filter)
     if (this.state.page > 1) {
       this.setState({page: 1});
