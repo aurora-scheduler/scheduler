@@ -16,7 +16,7 @@ export default class Task extends React.Component {
     };
   }
 
-  componentWillMount() {
+  UNSAFE_componentWillMount() {
     const {api, match: {params: {role, environment, name, taskId}}} = this.props;
     const that = this;
 

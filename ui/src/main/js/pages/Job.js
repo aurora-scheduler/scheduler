@@ -23,7 +23,7 @@ export default class Job extends React.Component {
     };
   }
 
-  componentWillMount() {
+  UNSAFE_componentWillMount() {
     const {api, match: {params: {role, environment, name}}} = this.props;
     const that = this;
     const key = new JobKey({role, environment, name});

@@ -9,13 +9,13 @@ function UpdateTimeDisplay({ timestamp }) {
     <h4>{moment(timestamp).utc().format('HH:mm')}</h4>
     <span className='time-ago'><RelativeTime ts={timestamp} /></span>
   </div>);
-};
+}
 
 function UpdateDuration({ update }) {
   const duration = (update.update.summary.state.lastModifiedTimestampMs -
     update.update.summary.state.createdTimestampMs);
   return <div className='update-duration'>Duration: {moment.duration(duration).humanize()}</div>;
-};
+}
 
 function UpdateTimeRange({ update }) {
   return (<div className='update-time-range'>
@@ -23,7 +23,7 @@ function UpdateTimeRange({ update }) {
     <h5>~</h5>
     <UpdateTimeDisplay timestamp={update.update.summary.state.lastModifiedTimestampMs} />
   </div>);
-};
+}
 
 export default function UpdateTime({ update }) {
   return (<div>

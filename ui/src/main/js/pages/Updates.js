@@ -14,7 +14,7 @@ export class UpdatesFetcher extends React.Component {
     this.state = { updates: null };
   }
 
-  componentWillMount() {
+  UNSAFE_componentWillMount() {
     const that = this;
     const query = new JobUpdateQuery();
     query.updateStatuses = this.props.states;

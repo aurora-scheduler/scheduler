@@ -24,7 +24,7 @@ export default class Tabs extends React.Component {
     }
   }
 
-  componentWillReceiveProps(nextProps) {
+  UNSAFE_componentWillReceiveProps(nextProps) {
     // Because this component manages its own state, we need to listen to changes to the activeTab
     // property - as the changes will not propagate without the component being remounted.
     if (nextProps.activeTab !== this.props.activeTab &&
