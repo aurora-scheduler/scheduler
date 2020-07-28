@@ -2,6 +2,8 @@
   // babel parser to support ES features
   "parser": "babel-eslint",
   "extends": [
+    "eslint:recommended",
+    "plugin:react/recommended",
     "standard",
     "standard-react"
   ],
@@ -44,5 +46,10 @@
     // deals with the chai expression problem
     "no-unused-expressions": 0,
     "chai-friendly/no-unused-expressions": 2
+  },
+  "settings": {
+    "react": {
+      "version": "detect",
+    }
   }
 }
