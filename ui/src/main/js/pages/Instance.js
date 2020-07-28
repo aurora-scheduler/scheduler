@@ -36,12 +36,12 @@ export default class Instance extends React.Component {
     });
   }
 
-  componentWillMount(props) {
+  UNSAFE_componentWillMount(props) {
     const { role, environment, name, instance } = this.props.match.params;
     this.fetchTask(role, environment, name, instance);
   }
 
-  componentWillUpdate(nextProps, nextState) {
+  UNSAFE_componentWillUpdate(nextProps, nextState) {
     if (this.state.loading && !nextState.loading) {
       const activeTask = nextState.tasks.find(isActive);
 

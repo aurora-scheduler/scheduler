@@ -14,7 +14,7 @@ export default class Jobs extends React.Component {
     this.state = {cluster: '', jobs: [], loading: isNully(props.jobs)};
   }
 
-  componentWillMount() {
+  UNSAFE_componentWillMount() {
     const that = this;
     this.props.api.getJobSummary(this.props.match.params.role, (response) => {
       const jobs = (that.props.match.params.environment)

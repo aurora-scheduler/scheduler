@@ -13,11 +13,11 @@ export default class Update extends React.Component {
     this.state = { loading: true };
   }
 
-  componentWillMount() {
+  UNSAFE_componentWillMount() {
     this.fetchUpdateDetails();
   }
 
-  componentWillUpdate(nextProps, nextState) {
+  UNSAFE_componentWillUpdate(nextProps, nextState) {
     if (!nextState.loading && isInProgressUpdate(nextState.update)) {
       // refetch update details in 60 seconds
       setTimeout(() => { this.fetchUpdateDetails(); }, 60000);

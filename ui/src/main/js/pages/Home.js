@@ -10,7 +10,7 @@ export default class HomePage extends React.Component {
     this.state = {cluster: '', roles: [], loading: true};
   }
 
-  componentWillMount(props) {
+  UNSAFE_componentWillMount(props) {
     const that = this;
     this.props.api.getRoleSummary((response) => {
       that.setState({
