@@ -3,8 +3,10 @@
 
 ### New/updated:
 - Updated to Mesos 1.7.2.
-- Updated node dependencies.
-- Bumped up Node version to 12.18.0
+- Updated node dependencies including eslint to 7.5.0.
+- Bumped up Node version to 12.18.3
+- com.github.node-gradle.node plugin bumped up to 2.2.4
+- Added UNSAFE prefixes to the required functions in react code.
 - Updated Quartz Scheduler to 2.3.1
 - Updated Gradle to version 5.6.4
 - Updated Guava to 29.0-jre
