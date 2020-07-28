@@ -2,8 +2,6 @@
   // babel parser to support ES features
   "parser": "babel-eslint",
   "extends": [
-    "eslint:recommended",
-    "plugin:react/recommended",
     "standard",
     "standard-react"
   ],
