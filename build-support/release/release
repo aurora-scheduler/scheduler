@@ -172,7 +172,7 @@ wget --directory-prefix "${rc_dir}" "${rc_release_location}"
 cd "${release_dir}"
 
 # Rename the .auroraversion from -RC[:digit:] to release current_version and repackage the release
-tar -xzf "${rc_dir}/aurora-scheduler-*.tar.gz"
+tar -xzf "${rc_dir}"/aurora-scheduler-*.tar.gz
 mv aurora-scheduler-* "${dist_name}"
 echo "${current_version}" > "${dist_name}/.auroraversion"
 tar -czf "${dist_name}.tar.gz" "${dist_name}"
