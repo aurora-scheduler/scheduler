@@ -129,6 +129,9 @@ fi
 dist_name="aurora-scheduler-${current_version}"
 dist_dir=${base_dir}/dist
 
+mkdir -p "${dist_dir}"
+
+
 function print_reset_instructions {
 cat <<EOF
 To roll back your local repo you will need to run:
