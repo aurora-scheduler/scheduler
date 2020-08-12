@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python3
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@
 # limitations under the License.
 #
 # checkstyle: noqa
-from __future__ import print_function
+
 
 import os
 import re
@@ -443,7 +443,7 @@ def parse_structs(thrift_defs):
     return Field(ttype, field.group('name'))
 
   def parse_fields(field_str):
-    return map(parse_field, re.finditer(FIELD_RE, field_str))
+    return list(map(parse_field, re.finditer(FIELD_RE, field_str)))
 
   def parse_values(enum_str):
     return [m.group('name') for m in re.finditer(ENUM_VALUE_RE, enum_str)]

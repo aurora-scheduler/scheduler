@@ -77,7 +77,7 @@ class ThriftEntitiesPlugin implements Plugin<Project>  {
 }
 
 class ThriftEntitiesPluginExtension {
-  def python = 'python2.7'
+  def python = 'python3'
   File genClassesDir
   File genResourcesDir
   File genJavaDir
