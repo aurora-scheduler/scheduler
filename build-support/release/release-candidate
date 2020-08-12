@@ -15,13 +15,10 @@
 #
 # This script is used to create a release candidate. It will update the current
 # .auroraversion as well as creates a tag for the new release candidate and
-# publishes the source distribution and signatures to be voted on.
+# publishes the source distribution and signatures.
 #
 #   master~1 (0.5.0-snapshot) ----- master (0.6.0-snapshot)
 #                             \---- 0.5.0 (0.5.0)
-#
-# A email template will be generated after successfully generating a release
-# candidate which will need to be sent to the dev@ and private@ mailing lists.
 #
 set -o errexit
 set -o nounset
@@ -33,12 +30,12 @@ export GPG_TTY=${GPG_TTY:-$(tty)}
 
 rc_number=0
 override_version=''
-aurora_git_web_url='https://gitbox.apache.org/repos/asf?p=aurora.git'
-aurora_svn_dist_url='https://dist.apache.org/repos/dist/dev/aurora'
+aurora_git_web_url='https://github.com/aurora-scheduler/aurora'
+aurora_github_api='repos/aurora-scheduler/aurora/issues'
 
 function print_help_and_exit {
 cat <<EOF
-Apache Aurora release candidate tool.
+Aurora Scheduler release candidate tool.
 
 Usage: $0 [-h] [-l p|m|M] [-r #] [-p | publish]
 
@@ -89,6 +86,19 @@ done
 shift $(($OPTIND - 1))
 if [[ "${1:-dry-run}" == "publish" ]]; then
   publish=1
+fi
+
+# Check if github cli is installed
+if ! command -v gh &> /dev/null
+then
+    echo "gh could not be found, please install the github cli"
+    echo "https://cli.github.com/"
+    exit 1
+fi
+
+if [[ ! -f $HOME/.config/gh/hosts.yml ]]; then
+  echo "Please log into the github cli"
+  exit 1
 fi
 
 # Update local repository
@@ -155,7 +165,7 @@ fi
 
 # Add the rc tag to the current version
 rc_version="${current_version}-rc${rc_number}"
-rc_version_tag="rel/${rc_version}"
+rc_version_tag="${rc_version}"
 
 echo
 echo "Generating release candidate ${rc_version}"
@@ -196,7 +206,9 @@ fi
 git clean -fdxq
 
 echo "Generating changelog"
-./build-support/release/changelog $current_version
+REL_ADD_CHANGELOG=$(gh api -XGET "$aurora_github_api" -f state=closed | python3 ./build-support/release/changelog.py $current_version)
+echo "$REL_ADD_CHANGELOG" | cat - CHANGELOG > temp && mv temp CHANGELOG
+
 git add CHANGELOG
 git commit -m "Updating CHANGELOG for ${current_version} release."
 
@@ -217,7 +229,7 @@ git commit -m "Updating .auroraversion to ${rc_version}."
 # Build the source distribution from the new branch
 echo "Building the source distribution"
 dist_dir=dist
-dist_name="apache-aurora-${rc_version}"
+dist_name="aurora-scheduler-${rc_version}"
 
 mkdir -p ${dist_dir}
 git archive --prefix=${dist_name}/ -o ${dist_dir}/${dist_name}.tar.gz HEAD
@@ -231,21 +243,11 @@ pushd ${dist_dir}
   shasum -a 512 ${dist_name}.tar.gz > ${dist_name}.tar.gz.sha512
 popd
 
-aurora_svn_rc_url="${aurora_svn_dist_url}/${rc_version}"
-
 # Publish release candidate to svn and commit and push the new git tag
 if [[ $publish == 1 ]]; then
-  echo "Publishing release candidate to ${aurora_svn_rc_url}"
-  svn mkdir ${aurora_svn_rc_url} -m "aurora-${current_version} release candidate ${rc_version_tag}"
-  svn co --depth=empty ${aurora_svn_rc_url} ${dist_dir}
-  pushd ${dist_dir}
-  svn add ${dist_name}*
-  svn ci -m "aurora-${current_version} release candidate ${rc_version_tag}"
-  popd
-
   echo "Creating tag ${rc_version_tag}"
   git tag -s ${rc_version_tag} \
-    -m "Apache Aurora ${current_version} release candidate ${rc_version_tag}"
+    -m "Aurora Scheduler ${current_version} release candidate ${rc_version_tag}"
   git push origin "${rc_version_tag}"
 
   if [[ "$starting_git_branch" = "master" ]]; then
@@ -258,63 +260,63 @@ if [[ $publish == 1 ]]; then
   fi
 fi
 
-echo "Done creating the release candidate. The following draft email has been created"
-echo "to send to the dev@aurora.apache.org mailing list"
-echo
 
-# Create the email template for the release candidate to be sent to the mailing lists.
-if [[ $(uname) == Darwin ]]; then
-  vote_end=$(date -v+3d)
-else
-  vote_end=$(date -d+3days)
-fi
+RELEASE_INST=$(cat <<__EOF__
+Done creating the release candidate.
+Please proceed to create a new release on github
 
-MESSAGE=$(cat <<__EOF__
-To: dev@aurora.apache.org
-Subject: [VOTE] Release Apache Aurora ${current_version} RC${rc_number}
+https://github.com/aurora-scheduler/aurora/releases/new
 
-All,
+Upload the following:
 
-I propose that we accept the following release candidate as the official
-Apache Aurora ${current_version} release.
-
-Aurora ${rc_version} includes the following:
----
-The RELEASE NOTES for the release are available at:
-${aurora_git_web_url}&f=RELEASE-NOTES.md&hb=${rc_version_tag}
-
-The CHANGELOG for the release is available at:
-${aurora_git_web_url}&f=CHANGELOG&hb=${rc_version_tag}
-
-The tag used to create the release candidate is:
-${aurora_git_web_url};a=shortlog;h=refs/tags/${rc_version_tag}
-
-The release candidate is available at:
-${aurora_svn_rc_url}/${dist_name}.tar.gz
-
-The SHA-512 checksum of the release candidate can be found at:
-${aurora_svn_rc_url}/${dist_name}.tar.gz.sha512
-
-The signature of the release candidate can be found at:
-${aurora_svn_rc_url}/${dist_name}.tar.gz.asc
-
-The GPG key used to sign the release are available at:
-${aurora_svn_dist_url}/KEYS
-
-Please download, verify, and test.
-
-The vote will close on ${vote_end}
-
-[ ] +1 Release this as Apache Aurora ${current_version}
-[ ] +0
-[ ] -1 Do not release this as Apache Aurora ${current_version} because...
-
+${dist_dir}/${dist_name}.tar.gz
+${dist_dir}/${dist_name}.tar.gz.sha512
+${dist_dir}/${dist_name}.tar.gz.asc
 __EOF__
 )
 
 echo "--------------------------------------------------------------------------------"
 echo
-echo "${MESSAGE}"
+echo "${RELEASE_INST}"
+echo
+echo "--------------------------------------------------------------------------------"
+echo
+
+
+release_location="${aurora_git_web_url}/releases/download/${rc_version_tag}"
+
+RC_MESSAGE=$(cat <<__EOF__
+Aurora Scheduler ${rc_version} includes the following:
+---
+The RELEASE NOTES for the release are available at:
+${aurora_git_web_url}/blob/${rc_version_tag}/RELEASE-NOTES.md
+
+The CHANGELOG for the release is available at:
+${aurora_git_web_url}/blob/${rc_version_tag}/CHANGELOG
+
+The tag used to create the release candidate is:
+${aurora_git_web_url}/tree/${rc_version_tag}
+
+The release candidate is available at:
+${release_location}/${dist_name}.tar.gz
+
+The SHA-512 checksum of the release candidate can be found at:
+${release_location}/${dist_name}.tar.gz.sha512
+
+The signature of the release candidate can be found at:
+${release_location}/${dist_name}.tar.gz.asc
+
+The GPG key used to sign the release are available at:
+${aurora_git_web_url}/tree/${rc_version_tag}/KEYS
+
+Please download, verify, and test.
+__EOF__
+)
+
+
+echo "--------------------------------------------------------------------------------"
+echo
+echo "${RC_MESSAGE}"
 echo
 echo "--------------------------------------------------------------------------------"
 echo
