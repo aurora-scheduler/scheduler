@@ -13,8 +13,7 @@
 # limitations under the License.
 #
 #
-# This script is used to publish the official release after a successful
-# vote of a release-candidate.
+# This script is used to plublish an Aurora Scheduler release
 
 set -e
 set -o nounset
@@ -24,13 +23,11 @@ set -o nounset
 # commits/tags.
 export GPG_TTY=${GPG_TTY:-$(tty)}
 
-aurora_git_web_url='https://gitbox.apache.org/repos/asf?p=aurora.git'
-aurora_svn_dist_url='https://dist.apache.org/repos/dist/release/aurora'
-aurora_svn_dev_dist_url='https://dist.apache.org/repos/dist/dev/aurora'
+aurora_git_web_url='https://github.com/aurora-scheduler/aurora'
 
 function print_help_and_exit {
 cat <<EOF
-Apache Aurora release tool.
+Aurora Scheduler release tool.
 
 Usage: $0 [-h] [-r #] [-p | publish]
 
@@ -116,7 +113,7 @@ else
 fi
 
 previous_version_tag="${current_version}-rc${rc_tag_version}"
-current_version_tag="rel/${current_version}"
+current_version_tag="${current_version}"
 
 # Make sure the tag does not exist
 if [[ $(git ls-remote --exit-code --tags origin refs/tags/${current_version} >/dev/null 2>&1) == 0 ]]; then
@@ -129,7 +126,7 @@ if [[ $publish == 0 ]]; then
   echo "Performing dry-run"
 fi
 
-dist_name="apache-aurora-${current_version}"
+dist_name="aurora-scheduler-${current_version}"
 dist_dir=${base_dir}/dist
 
 function print_reset_instructions {
@@ -153,101 +150,93 @@ if [[ $publish == 1 ]]; then
   git checkout -b "stage_${current_version_tag}"
 
   # Increment the version and create a branch
-  echo ${current_version} > .auroraversion
+  echo "${current_version}" > .auroraversion
   git add .auroraversion
   git commit -m "Updating .auroraversion to release version ${current_version}."
   git tag -s "${current_version_tag}" \
-    -m "Apache Aurora ${current_version} release" HEAD
+    -m "Aurora Scheduler ${current_version} release" HEAD
   git push origin "${current_version_tag}"
 fi
 
 rc_dir=${dist_dir}/rc
 release_dir=${dist_dir}/${current_version}
-mkdir -p ${rc_dir}
-cd ${dist_dir}
+mkdir "${release_dir}"
+mkdir -p "${rc_dir}"
+cd "${dist_dir}"
 
-# Checkout the release candidate
-svn co ${aurora_svn_dev_dist_url}/${previous_version_tag} ${rc_dir} >/dev/null 2>&1
+rc_release_location="${aurora_git_web_url}/releases/download/${rc_dir}"
+# Fetch the release candidate
+wget --directory-prefix "${rc_dir}" "${rc_release_location}"
 
-if [[ $publish == 1 ]]; then
-  echo "Publishing the release"
-  # Make the release dist directory and check it out
-  svn mkdir ${aurora_svn_dist_url}/${current_version} -m "aurora-${current_version} release"
-  svn co --depth=empty ${aurora_svn_dist_url}/${current_version} ${release_dir}
-else
-  mkdir ${release_dir}
-fi
-
-cd ${release_dir}
+cd "${release_dir}"
 
 # Rename the .auroraversion from -RC[:digit:] to release current_version and repackage the release
-tar -xzf ${rc_dir}/apache-aurora-*.tar.gz
-mv apache-aurora-* ${dist_name}
-echo ${current_version} > ${dist_name}/.auroraversion
-tar -czf ${dist_name}.tar.gz ${dist_name}
-rm -rf ${dist_name}
+tar -xzf "${rc_dir}/aurora-scheduler-*.tar.gz"
+mv aurora-scheduler-* "${dist_name}"
+echo "${current_version}" > "${dist_name}/.auroraversion"
+tar -czf "${dist_name}.tar.gz" "${dist_name}"
+rm -rf "${dist_name}"
 
 # Sign the tarball.
 echo "Signing the distribution"
-gpg --armor --output ${dist_name}.tar.gz.asc --detach-sig ${dist_name}.tar.gz
+gpg --armor --output "${dist_name}.tar.gz.asc" --detach-sig "${dist_name}.tar.gz"
 
 # Create the checksums
 echo "Creating checksum"
-shasum -a 512 ${dist_name}.tar.gz > ${dist_name}.tar.gz.sha512
+shasum -a 512 "${dist_name}.tar.gz" > "${dist_name}.tar.gz.sha512"
+
+cd "${base_dir}"
+
+RELEASE_INST=$(cat <<__EOF__
+Done creating the release candidate.
+Please proceed to create a new release on github
+
+https://github.com/aurora-scheduler/aurora/releases/new
+
+Upload the following:
+
+${release_dir}/${dist_name}.tar.gz
+${release_dir}/${dist_name}.tar.gz.sha512
+${release_dir}/${dist_name}.tar.gz.asc
+__EOF__
+)
 
 if [[ $publish == 1 ]]; then
-  # Commit the release
-  svn add ${dist_name}*
-  svn ci -m "aurora-${current_version} release"
+  echo "--------------------------------------------------------------------------------"
+  echo
+  echo "${RELEASE_INST}"
+  echo
+  echo "--------------------------------------------------------------------------------"
+  echo
 fi
 
-cd ${base_dir}
 
 echo
-echo "Done creating the release. The following draft email has been created"
-echo "to send to the dev@aurora.apache.org mailing list."
-echo
+echo "Done creating the release."
 
-# Create the email template for the release to be sent to the mailing lists.
+release_location="${aurora_git_web_url}/releases/download/${current_version_tag}"
+
+# Create the github release template to be used in the release page
 MESSAGE=$(cat <<__EOF__
-To: dev@aurora.apache.org
-Subject: [RESULT][VOTE] Release Apache Aurora ${current_version} RC${rc_tag_version}
-
-All,
-The vote to accept Apache Aurora ${current_version} RC${rc_tag_version}
-as the official Apache Aurora ${current_version} release has passed.
-
-
-+1 (Binding)
-------------------------------
-
-
-+1 (Non-binding)
-------------------------------
-
-
-There were no 0 or -1 votes. Thank you to all who helped make this release.
-
-
-Aurora ${current_version} includes the following:
+Aurora Scheduler ${current_version} includes the following:
 ---
 The CHANGELOG for the release is available at:
-${aurora_git_web_url}&f=CHANGELOG&hb=${current_version_tag}
+${aurora_git_web_url}/blob/${current_version_tag}/CHANGELOG
 
 The tag used to create the release with is ${current_version_tag}:
-${aurora_git_web_url}&a=shortlog&h=refs/tags/${current_version_tag}
+${aurora_git_web_url}/tree/${current_version_tag}
 
 The release is available at:
-${aurora_svn_dist_url}/${current_version}/${dist_name}.tar.gz
+${release_location}/${dist_name}.tar.gz
 
 The SHA-512 checksum of the release can be found at:
-${aurora_svn_dist_url}/${current_version}/${dist_name}.tar.gz.sha512
+${release_location}/${dist_name}.tar.gz.sha512
 
 The signature of the release can be found at:
-${aurora_svn_dist_url}/${current_version}/${dist_name}.tar.gz.asc
+${release_location}/${dist_name}.tar.gz.asc
 
 The GPG key used to sign the release are available at:
-${aurora_svn_dist_url}/KEYS
+${aurora_git_web_url}/tree/${current_version_tag}/KEYS
 
 __EOF__
 )
