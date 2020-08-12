@@ -1,3 +1,24 @@
+Aurora Scheduler 0.23.0
+--------------------------------------------------------------------------------
+## Issues
+  * #23 - Update Guava and/or Guice dependencies
+  * #19 - Update and resolve npm issues
+  * #18 - Upgrade curator dependencies
+  * #17 - Upgrade Jcommander
+  * #16 - Upgrade Quartz scheduler
+  * #15 - Upgrade Gradle to latest 5.x version
+  * #2 - Moving python client to its own repo
+
+## Pull Requests
+  * #25 - Fix npm lint
+  * #24 - Upgrade Guava, Guice, Gradle, SpotBugs, Commons
+  * #22 - Upgrade Curator and JCommander dependencies
+  * #21 - Node dependencies update
+  * #20 - Upgrading Quartz scheduler
+  * #13 - Upgrading to Mesos 1.7.x
+  * #12 - Improve resume/pause update with regards to previously failed instances
+  * #10 - Moving out code for Thermos, Thermos Observer, and the python 2 client.
+  * #3 - Adding support for using an IP as a resource
 Aurora 0.22.0
 --------------------------------------------------------------------------------
 

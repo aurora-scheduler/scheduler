@@ -68,7 +68,7 @@ git fetch --all -q
 git fetch --tags -q
 
 # Ensure that a signing key is available
-if [[ -z "`git config user.signingkey`" ]]; then
+if [[ -z "$(git config user.signingkey)" ]]; then
   cat <<EOF
 Error: No GPG signing key can be found within gitconfig.
 
@@ -86,17 +86,17 @@ fi
 # Set the base dir for the script to be the top level of the repository
 base_dir=$(git rev-parse --show-toplevel)
 # Verify that this is a clean repository
-if [[ -n "`git status --porcelain`" ]]; then
+if [[ -n "$(git status --porcelain)" ]]; then
   echo "ERROR: Please run from a clean master."
   exit 1
-elif [[ "`git rev-parse --abbrev-ref HEAD`" == "master" ]]; then
+elif [[ "$(git rev-parse --abbrev-ref HEAD)" == "master" ]]; then
   echo "ERROR: This script must be run from the released branch."
   exit 1
 fi
 
 if [[ "$base_dir" != "$PWD" ]]; then
   echo "Warrning: This script must be run from the root of the repository ${base_dir}"
-  cd $base_dir
+  cd "$base_dir"
 fi
 
 # Make sure that this is not on a snapshot release
@@ -105,9 +105,9 @@ if [[ $current_version =~ .*-SNAPSHOT ]]; then
   echo "ERROR: .auroraversion can not be a 'SNAPSHOT', it is ${current_version}"
   exit 1
 else
-  major=`echo $current_version | cut -d. -f1`
-  minor=`echo $current_version | cut -d. -f2`
-  patch=`echo $current_version | cut -d. -f3 | cut -d- -f1`
+  major=$(echo "$current_version" | cut -d. -f1)
+  minor=$(echo "$current_version" | cut -d. -f2)
+  patch=$(echo "$current_version" | cut -d. -f3 | cut -d- -f1)
 
   current_version="${major}.${minor}.${patch}"
 fi
@@ -116,7 +116,7 @@ previous_version_tag="${current_version}-rc${rc_tag_version}"
 current_version_tag="${current_version}"
 
 # Make sure the tag does not exist
-if [[ $(git ls-remote --exit-code --tags origin refs/tags/${current_version} >/dev/null 2>&1) == 0 ]]; then
+if [[ $(git ls-remote --exit-code --tags origin "refs/tags/${current_version}" >/dev/null 2>&1) == 0 ]]; then
   echo "ERROR: ${current_version} tag exists."
   exit 1
 fi
@@ -128,6 +128,8 @@ fi
 
 dist_name="aurora-scheduler-${current_version}"
 dist_dir=${base_dir}/dist
+
+mkdir -p "${dist_dir}"
 
 function print_reset_instructions {
 cat <<EOF
@@ -164,14 +166,15 @@ mkdir "${release_dir}"
 mkdir -p "${rc_dir}"
 cd "${dist_dir}"
 
-rc_release_location="${aurora_git_web_url}/releases/download/${rc_dir}"
+# TODO(rdelvalle): Verify hashsum and detached signature after downloading
+rc_release_location="${aurora_git_web_url}/releases/download/${previous_version_tag}/aurora-scheduler-${previous_version_tag}.tar.gz"
 # Fetch the release candidate
 wget --directory-prefix "${rc_dir}" "${rc_release_location}"
 
 cd "${release_dir}"
 
 # Rename the .auroraversion from -RC[:digit:] to release current_version and repackage the release
-tar -xzf "${rc_dir}/aurora-scheduler-*.tar.gz"
+tar -xzf "${rc_dir}"/aurora-scheduler-*.tar.gz
 mv aurora-scheduler-* "${dist_name}"
 echo "${current_version}" > "${dist_name}/.auroraversion"
 tar -czf "${dist_name}.tar.gz" "${dist_name}"
