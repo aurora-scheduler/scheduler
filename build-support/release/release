@@ -96,7 +96,7 @@ fi
 
 if [[ "$base_dir" != "$PWD" ]]; then
   echo "Warrning: This script must be run from the root of the repository ${base_dir}"
-  cd $base_dir
+  cd "$base_dir"
 fi
 
 # Make sure that this is not on a snapshot release
@@ -105,9 +105,9 @@ if [[ $current_version =~ .*-SNAPSHOT ]]; then
   echo "ERROR: .auroraversion can not be a 'SNAPSHOT', it is ${current_version}"
   exit 1
 else
-  major=`echo $current_version | cut -d. -f1`
-  minor=`echo $current_version | cut -d. -f2`
-  patch=`echo $current_version | cut -d. -f3 | cut -d- -f1`
+  major=$(echo "$current_version" | cut -d. -f1)
+  minor=$(echo "$current_version" | cut -d. -f2)
+  patch=$(echo "$current_version" | cut -d. -f3 | cut -d- -f1)
 
   current_version="${major}.${minor}.${patch}"
 fi
@@ -116,7 +116,7 @@ previous_version_tag="${current_version}-rc${rc_tag_version}"
 current_version_tag="${current_version}"
 
 # Make sure the tag does not exist
-if [[ $(git ls-remote --exit-code --tags origin refs/tags/${current_version} >/dev/null 2>&1) == 0 ]]; then
+if [[ $(git ls-remote --exit-code --tags origin "refs/tags/${current_version}" >/dev/null 2>&1) == 0 ]]; then
   echo "ERROR: ${current_version} tag exists."
   exit 1
 fi
@@ -164,7 +164,8 @@ mkdir "${release_dir}"
 mkdir -p "${rc_dir}"
 cd "${dist_dir}"
 
-rc_release_location="${aurora_git_web_url}/releases/download/${rc_dir}"
+# TODO(rdelvalle): Verify hashsum and detached signature after downloading
+rc_release_location="${aurora_git_web_url}/releases/download/${previous_version_tag}.tar.gz"
 # Fetch the release candidate
 wget --directory-prefix "${rc_dir}" "${rc_release_location}"
 
