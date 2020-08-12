@@ -168,7 +168,7 @@ mkdir -p "${rc_dir}"
 cd "${dist_dir}"
 
 # TODO(rdelvalle): Verify hashsum and detached signature after downloading
-rc_release_location="${aurora_git_web_url}/releases/download/${previous_version_tag}.tar.gz"
+rc_release_location="${aurora_git_web_url}/releases/download/${previous_version_tag}/aurora-scheduler-${previous_version_tag}.tar.gz"
 # Fetch the release candidate
 wget --directory-prefix "${rc_dir}" "${rc_release_location}"
 
