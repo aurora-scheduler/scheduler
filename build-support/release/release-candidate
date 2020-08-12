@@ -206,7 +206,7 @@ fi
 git clean -fdxq
 
 echo "Generating changelog"
-REL_ADD_CHANGELOG=$(gh api -XGET "$aurora_github_api" | python3 ./build-support/release/changelog.py $current_version)
+REL_ADD_CHANGELOG=$(gh api -XGET "$aurora_github_api" -f state=closed | python3 ./build-support/release/changelog.py $current_version)
 echo "$REL_ADD_CHANGELOG" | cat - CHANGELOG > temp && mv temp CHANGELOG
 
 git add CHANGELOG
