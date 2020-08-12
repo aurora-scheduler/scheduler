@@ -68,7 +68,7 @@ git fetch --all -q
 git fetch --tags -q
 
 # Ensure that a signing key is available
-if [[ -z "`git config user.signingkey`" ]]; then
+if [[ -z "$(git config user.signingkey)" ]]; then
   cat <<EOF
 Error: No GPG signing key can be found within gitconfig.
 
@@ -86,10 +86,10 @@ fi
 # Set the base dir for the script to be the top level of the repository
 base_dir=$(git rev-parse --show-toplevel)
 # Verify that this is a clean repository
-if [[ -n "`git status --porcelain`" ]]; then
+if [[ -n "$(git status --porcelain)" ]]; then
   echo "ERROR: Please run from a clean master."
   exit 1
-elif [[ "`git rev-parse --abbrev-ref HEAD`" == "master" ]]; then
+elif [[ "$(git rev-parse --abbrev-ref HEAD)" == "master" ]]; then
   echo "ERROR: This script must be run from the released branch."
   exit 1
 fi
