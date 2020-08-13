@@ -1,4 +1,7 @@
-0.23.0 (unreleased)
+0.24.0 (unreleased)
+======
+
+0.23.0
 ======
 
 ### New/updated:
