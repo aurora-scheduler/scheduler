@@ -27,3 +27,7 @@
   [SUCCEDED, FAILED] before pausing the update. With this change, the final pause to 
   acknowledge an update had sucessfully completed has also been dropped.
 - Support has been added to use a resource with the key ips from Mesos.
+
+0.22.0 and earlier
+======
+- Please see the last Apache Aurora [release notes](https://github.com/apache/attic-aurora/blob/master/RELEASE-NOTES.md)
