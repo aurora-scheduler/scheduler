@@ -13,7 +13,7 @@
     "query-string": "^5.0.0",
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
-    "react-router-dom": "^4.2.2"
+    "react-router-dom": "^5.2.0"
   },
   "devDependencies": {
     "ajv": "^6.12.2",
