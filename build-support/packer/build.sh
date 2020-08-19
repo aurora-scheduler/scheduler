@@ -17,7 +17,7 @@ set -o errexit
 set -o nounset
 set -o verbose
 
-readonly MESOS_VERSION=1.7.2
+readonly MESOS_VERSION=1.8.0
 
 function remove_unused {
   # The default bento/ubuntu-16.04 image includes juju-core, which adds ~300 MB to our image.
@@ -63,7 +63,7 @@ function install_docker {
 
 function install_docker2aci {
   DOCKER2ACI_VERSION="0.17.2"
-  GOLANG_VERSION="1.14.3"
+  GOLANG_VERSION="1.14.7"
 
   TEMP_PATH=$(mktemp -d)
   pushd "$TEMP_PATH"

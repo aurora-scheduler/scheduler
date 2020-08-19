@@ -14,7 +14,7 @@ services:
         ipv4_address: 192.168.33.2
 
   master:
-    image: aurorascheduler/mesos-master:1.7.2
+    image: aurorascheduler/mesos-master:1.8.0
     restart: on-failure
     ports:
     - "5050:5050"
@@ -32,7 +32,7 @@ services:
     - zk
 
   agent:
-    image: aurorascheduler/mesos-agent:1.7.2
+    image: aurorascheduler/mesos-agent:1.8.0
     pid: host
     restart: on-failure
     ports:

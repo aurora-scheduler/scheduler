@@ -1,6 +1,9 @@
 0.24.0 (unreleased)
 ======
 
+### New/updated:
+- Updated to Mesos 1.8.0.
+
 0.23.0
 ======
 
