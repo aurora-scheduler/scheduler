@@ -127,10 +127,10 @@ function warm_artifact_cache {
   # Fetch the mesos egg, needed to build python components.
   # The mesos.executor target in 3rdparty/python/BUILD expects to find the native egg in
   # third_party.
-  SVN_ROOT='https://svn.apache.org/repos/asf/aurora/3rdparty'
+  MESOS_PY_EGGS='https://dl.bintray.com/aurora-scheduler/python-eggs'
   pushd "$THIRD_PARTY_DIR"
     wget -c \
-      ${SVN_ROOT}/ubuntu/xenial64/python/mesos.executor-${MESOS_VERSION}-py2.7-linux-x86_64.egg
+      ${MESOS_PY_EGGS}/ubuntu/xenial64/mesos.executor-${MESOS_VERSION}-py2.7-linux-x86_64.egg
   popd
 
   chown -R vagrant:vagrant aurora
