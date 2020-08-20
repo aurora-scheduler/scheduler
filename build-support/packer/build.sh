@@ -40,10 +40,15 @@ function install_base_packages {
       libsasl2-dev \
       libsvn-dev \
       openjdk-8-jdk-headless \
-      python-dev
+      software-properties-common
   update-alternatives --set java /usr/lib/jvm/java-8-openjdk-amd64/jre/bin/java
-  # Installing zookeeperd as a separate command, as otherwise openjdk-7-jdk is also installed.
-  apt-get install -y zookeeperd
+
+  # Add repo to control Python version
+  add-apt-repository -y ppa:deadsnakes/ppa
+  apt-get update
+
+  #  Also installing zookeeperd as a separate command, as otherwise openjdk-7-jdk is also installed.
+  apt-get install -y python3.8 zookeeperd
 }
 
 function install_docker {
