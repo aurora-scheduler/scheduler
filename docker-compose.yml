@@ -14,7 +14,7 @@ services:
         ipv4_address: 192.168.33.2
 
   master:
-    image: aurorascheduler/mesos-master:1.8.0
+    image: aurorascheduler/mesos-master:1.8.1
     restart: on-failure
     ports:
     - "5050:5050"
@@ -32,7 +32,7 @@ services:
     - zk
 
   agent:
-    image: aurorascheduler/mesos-agent:1.8.0
+    image: aurorascheduler/mesos-agent:1.8.1
     pid: host
     restart: on-failure
     ports:
@@ -45,6 +45,7 @@ services:
       MESOS_RESOURCES: ports(*):[11000-11999]
       MESOS_SYSTEMD_ENABLE_SUPPORT: 'false'
       MESOS_WORK_DIR: /tmp/mesos
+      MESOS_ATTRIBUTES: 'zone:east
     networks:
       aurora_cluster:
         ipv4_address: 192.168.33.5
@@ -67,6 +68,7 @@ services:
       MESOS_MASTER: "zk://192.168.33.2:2181/mesos"
       EXTRA_SCHEDULER_ARGS: >
         -http_authentication_mechanism=NONE
+        -min_required_instances_for_sla_check=1
     volumes:
       - ./:/home/vagrant/aurora
     networks:

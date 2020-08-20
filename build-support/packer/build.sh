@@ -17,7 +17,7 @@ set -o errexit
 set -o nounset
 set -o verbose
 
-readonly MESOS_VERSION=1.8.0
+readonly MESOS_VERSION=1.8.1-2.0.2.ubuntu1604
 
 function remove_unused {
   # The default bento/ubuntu-16.04 image includes juju-core, which adds ~300 MB to our image.

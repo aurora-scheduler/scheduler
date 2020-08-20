@@ -2,7 +2,7 @@
 ======
 
 ### New/updated:
-- Updated to Mesos 1.8.0.
+- Updated to Mesos dependency to 1.8.1.
 
 0.23.0
 ======
