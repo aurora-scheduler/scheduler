@@ -215,7 +215,7 @@ project(':api') {
 
   task checkPython {
     doLast {
-      def python3Executable = ['python3', 'python'].find { python ->
+      def python3Executable = ['python3', 'python3.8', 'python'].find { python ->
         try {
           def check = "import sys; sys.exit(0 if sys.version_info >= (3,8) else 1)"
           return [python, "-c", check].execute().waitFor() == 0
