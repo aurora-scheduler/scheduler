@@ -3,6 +3,8 @@
 
 ### New/updated:
 - Updated to Mesos dependency to 1.8.1.
+- Pants version bumped up to 1.23.0.
+- Minimum Vagrant version bumped up to 2.2.9.
 
 0.23.0
 ======
