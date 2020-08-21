@@ -215,7 +215,7 @@ project(':api') {
 
   task checkPython {
     doLast {
-      def python3Executable = ['python3', 'python'].find { python ->
+      def python3Executable = ['python3', 'python3.8', 'python'].find { python ->
         try {
           def check = "import sys; sys.exit(0 if sys.version_info >= (3,8) else 1)"
           return [python, "-c", check].execute().waitFor() == 0
@@ -391,7 +391,7 @@ dependencies {
   compile "org.apache.curator:curator-client:${curatorRev}"
   compile "org.apache.curator:curator-framework:${curatorRev}"
   compile "org.apache.curator:curator-recipes:${curatorRev}"
-  compile 'org.apache.mesos:mesos:1.7.2'
+  compile 'org.apache.mesos:mesos:1.8.1'
   compile "org.asynchttpclient:async-http-client:${asyncHttpclientRev}"
   compile "org.apache.shiro:shiro-guice:${shiroRev}"
   compile "org.apache.shiro:shiro-web:${shiroRev}"

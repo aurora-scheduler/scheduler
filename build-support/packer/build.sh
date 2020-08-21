@@ -17,7 +17,7 @@ set -o errexit
 set -o nounset
 set -o verbose
 
-readonly MESOS_VERSION=1.7.2
+readonly MESOS_VERSION=1.8.1
 
 function remove_unused {
   # The default bento/ubuntu-16.04 image includes juju-core, which adds ~300 MB to our image.
@@ -40,10 +40,16 @@ function install_base_packages {
       libsasl2-dev \
       libsvn-dev \
       openjdk-8-jdk-headless \
-      python-dev
+      software-properties-common
   update-alternatives --set java /usr/lib/jvm/java-8-openjdk-amd64/jre/bin/java
-  # Installing zookeeperd as a separate command, as otherwise openjdk-7-jdk is also installed.
-  apt-get install -y zookeeperd
+
+  # Add repo to control Python version
+  add-apt-repository -y ppa:deadsnakes/ppa
+  apt-get update
+
+  # Install python3.8 and also installing zookeeperd as a separate command,
+  # as otherwise openjdk-7-jdk is also installed.
+  apt-get install -y python3.8 python3.8-distutils python3.8-dev zookeeperd
 }
 
 function install_docker {
@@ -63,7 +69,7 @@ function install_docker {
 
 function install_docker2aci {
   DOCKER2ACI_VERSION="0.17.2"
-  GOLANG_VERSION="1.14.3"
+  GOLANG_VERSION="1.14.7"
 
   TEMP_PATH=$(mktemp -d)
   pushd "$TEMP_PATH"
@@ -127,10 +133,10 @@ function warm_artifact_cache {
   # Fetch the mesos egg, needed to build python components.
   # The mesos.executor target in 3rdparty/python/BUILD expects to find the native egg in
   # third_party.
-  SVN_ROOT='https://svn.apache.org/repos/asf/aurora/3rdparty'
+  MESOS_PY_EGGS='https://dl.bintray.com/aurora-scheduler/python-eggs'
   pushd "$THIRD_PARTY_DIR"
     wget -c \
-      ${SVN_ROOT}/ubuntu/xenial64/python/mesos.executor-${MESOS_VERSION}-py2.7-linux-x86_64.egg
+      ${MESOS_PY_EGGS}/ubuntu/xenial64/mesos.executor-${MESOS_VERSION}-py2.7-linux-x86_64.egg
   popd
 
   chown -R vagrant:vagrant aurora

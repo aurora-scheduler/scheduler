@@ -110,4 +110,4 @@ install_rsyslog_config
 start_services
 configure_netrc
 docker_setup
-su vagrant -c "aurorabuild all"
+su vagrant -c "aurorabuild scheduler"
