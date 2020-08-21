@@ -50,9 +50,6 @@ function install_base_packages {
   # Install python3.8 and also installing zookeeperd as a separate command,
   # as otherwise openjdk-7-jdk is also installed.
   apt-get install -y python3.8 python3.8-distutils python3.8-dev zookeeperd
-
-  # Make python3 default to python3.8
-  update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.8 2
 }
 
 function install_docker {
