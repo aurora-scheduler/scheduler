@@ -45,7 +45,7 @@ services:
       MESOS_RESOURCES: ports(*):[11000-11999]
       MESOS_SYSTEMD_ENABLE_SUPPORT: 'false'
       MESOS_WORK_DIR: /tmp/mesos
-      MESOS_ATTRIBUTES: 'zone:east
+      MESOS_ATTRIBUTES: 'zone:east'
     networks:
       aurora_cluster:
         ipv4_address: 192.168.33.5
