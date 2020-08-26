@@ -11,7 +11,7 @@
 # limitations under the License.
 #
 
-MESOS_REV = '1.7.2'
+MESOS_REV = '1.8.1'
 
 python_requirement_library(
   name = 'mesos.interface',
