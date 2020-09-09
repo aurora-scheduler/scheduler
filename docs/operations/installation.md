@@ -4,8 +4,7 @@ Source and binary distribution for versions **0.22.0 and earlier** can be found 
 
 Source and binary distributions of versions **0.23.0 and later** can be found at https://github.com/aurora-scheduler/aurora/releases
 
-Installing from binary packages is
-recommended for most.
+Installing from binary packages is recommended where possible.
 
 - [Installing the scheduler](#installing-the-scheduler)
 - [Installing worker components](#installing-worker-components)
@@ -13,8 +12,8 @@ recommended for most.
 - [Installing Mesos](#installing-mesos)
 - [Troubleshooting](#troubleshooting)
 
-If our binay packages don't suite you, our package build toolchain makes it easy to build your
-own packages. See the [instructions](https://github.com/apache/aurora-packaging) to learn how.
+If our binay packages don't suit you, our package build toolchain makes it easy to build your
+own packages. See the [instructions](https://github.com/aurora-scheduler/packaging) to learn how.
 
 
 ## Machine profiles
@@ -47,7 +46,7 @@ Any machines that users submit jobs from.
 
 
 ## Installing the scheduler
-### Ubuntu Trusty
+### Ubuntu Xenial
 
 1. Install Mesos
    Skip down to [install mesos](#mesos-on-ubuntu-trusty), then run:
