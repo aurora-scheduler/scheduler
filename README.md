@@ -58,7 +58,7 @@ Aurora is built for users _and_ operators.
 in this space as the Mesos ecosystem (including our project) is now largely in legacy support mode._
 
 _We are extremely proud of what has been achieved by this project but the reality is there are other
-projects with a much more active community behind it where users will be able to enjoy better support._
+projects with a much more active community behind them where users will be able to enjoy better support._
 
 Aurora can take over for most uses of software like monit and chef.  Aurora can manage applications,
 while these tools are still useful to manage Aurora and Mesos themselves.
