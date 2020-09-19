@@ -21,7 +21,9 @@ Anyone who depends on tooling outside of the scheduler should look at taking up 
 
 Changes made to the scheduler will always strive to be compatible with existing tools but compatibility is _not_ guaranteed.
 More importantly, in many cases we will not be testing against such tools so it is
-up to users to report incompatible changes. **Tools in this case also include the [original Python2 client](https://github.com/aurora-scheduler/client).**
+up to users to report incompatible changes.
+
+**Tools in this case also include the [original Python2 client](https://github.com/aurora-scheduler/client).**
 
 ## Features
 
@@ -52,6 +54,12 @@ Aurora is built for users _and_ operators.
     and debug
 
 ### When and when not to use Aurora
+**Diclaimer:** _If you are not already using Aurora, it is strongly suggested you look into other similar projects 
+in this space as the Mesos ecosystem (including our project) is now largely in legacy support mode._
+
+_We are extremely proud of what has been achieved by this project but the reality is there are other
+projects with a much more active community behind it where users will be able to enjoy better support._
+
 Aurora can take over for most uses of software like monit and chef.  Aurora can manage applications,
 while these tools are still useful to manage Aurora and Mesos themselves.
 
