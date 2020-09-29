@@ -42,7 +42,7 @@ Mesos replicated log file path can be found by looking at the value given to the
 
 * Initialize the Mesos replicated log files using the mesos-log tool:
 ```
-sudo su -u <USER> mesos-log initialize --path=<native_log_file_path>
+sudo -u <USER> mesos-log initialize --path=<native_log_file_path>
 ```
 Where `USER` is the user under which the scheduler instance will be run. For installations using
 Debian packages, the default user will be `aurora`. You may alternatively choose to specify
