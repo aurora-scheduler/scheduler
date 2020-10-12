@@ -1,4 +1,4 @@
-package com.paypal.aurora.scheduler.offers;
+package com.paypal.aurora.scheduler.model;
 
 import org.apache.aurora.scheduler.offers.HostOffer;
 
