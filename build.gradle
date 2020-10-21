@@ -77,7 +77,7 @@ For more details, please see https://issues.apache.org/jira/browse/AURORA-1169
     }
   }
 
-  ext.commonsLangRev = '3.10'
+  ext.commonsLangRev = '3.11'
   ext.curatorRev = '4.3.0'
   ext.gsonRev = '2.3.1'
   ext.guavaRev = '29.0-jre'
