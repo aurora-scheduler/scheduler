@@ -83,7 +83,7 @@ For more details, please see https://issues.apache.org/jira/browse/AURORA-1169
   ext.guavaRev = '29.0-jre'
   ext.guiceRev = '4.2.3'
   ext.httpclientRev = '4.5.2'
-  ext.httpcoreRev = '4.4.4'
+  ext.httpcoreRev = '4.4.13'
   ext.asyncHttpclientRev = '2.0.37'
   ext.jacksonRev = '2.5.1'
   ext.jaxRsRev = '2.0'
