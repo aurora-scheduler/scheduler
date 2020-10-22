@@ -47,7 +47,7 @@ public class HttpOfferSetImpl implements OfferSet {
 
   private final Set<HostOffer> offers;
   private static final Logger LOG = LoggerFactory.getLogger(HttpOfferSetImpl.class);
-  private HttpPluginConfig plugin = null;
+  private final HttpPluginConfig plugin = new HttpPluginConfig();
   private final Gson gson;
   private long numOfTasks;
   private long totalSchedTime;
@@ -59,7 +59,6 @@ public class HttpOfferSetImpl implements OfferSet {
   public HttpOfferSetImpl(Ordering<HostOffer> ordering) {
     offers = new ConcurrentSkipListSet<>(ordering);
     gson = new Gson();
-    plugin = new HttpPluginConfig();
   }
 
   @Override
