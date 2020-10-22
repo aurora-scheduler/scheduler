@@ -11,7 +11,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.paypal.aurora.scheduler.offers;
+package io.github.aurora.scheduler.offers;
 
 import javax.inject.Singleton;
 
@@ -27,11 +27,11 @@ import org.apache.aurora.scheduler.offers.OfferSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class MagicMatchOfferSetModule extends AbstractModule {
+public class HttpOfferSetModule extends AbstractModule {
   private final CliOptions options;
-  private static final Logger LOG = LoggerFactory.getLogger(MagicMatchOfferSetModule.class);
+  private static final Logger LOG = LoggerFactory.getLogger(HttpOfferSetModule.class);
 
-  public MagicMatchOfferSetModule(CliOptions options) {
+  public HttpOfferSetModule(CliOptions options) {
     this.options = options;
   }
 
@@ -43,7 +43,7 @@ public class MagicMatchOfferSetModule extends AbstractModule {
       protected void configure() {
         bind(new TypeLiteral<Ordering<HostOffer>>() {
           }).toInstance(OfferOrderBuilder.create(options.offer.offerOrder));
-        bind(OfferSet.class).to(MagicMatchOfferSetImpl.class).in(Singleton.class);
+        bind(OfferSet.class).to(HttpOfferSetImpl.class).in(Singleton.class);
         expose(OfferSet.class);
       }
     });

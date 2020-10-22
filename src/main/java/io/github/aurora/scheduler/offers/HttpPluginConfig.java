@@ -11,7 +11,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.paypal.aurora.scheduler.offers;
+package io.github.aurora.scheduler.offers;
 
 import java.io.File;
 import java.io.IOException;
@@ -23,18 +23,22 @@ import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class PluginConfig {
-  private static final Logger LOG = LoggerFactory.getLogger(PluginConfig.class);
+public class HttpPluginConfig {
+  private static final Logger LOG = LoggerFactory.getLogger(HttpPluginConfig.class);
   private String endpoint = "http://localhost:9090";
+  private Config config;
+  private static final int DEFAULT_LOG_STEP = 1000;
   /*
     aurora-plugin.json file:
     {
       "host": "localhost",
-      "port": 9090
+      "port": 9090,
+      "debug": true,
+      "logStepInTaskNum": 100
     }
    */
-  public PluginConfig() {
-    final String  configFile = "/etc/magicmatch/aurora-plugin.json";
+  public HttpPluginConfig() {
+    final String configFile = "/etc/aurora-scheduler/http-endpoint.json";
     // load file
     String jsonStr = null;
     try {
@@ -45,11 +49,13 @@ public class PluginConfig {
     if (jsonStr == null || "".equals(jsonStr)) {
       LOG.error(configFile + " is empty");
     } else {
-      Config config = new Gson().fromJson(jsonStr, Config.class);
+      config = new Gson().fromJson(jsonStr, Config.class);
       if (config == null) {
         LOG.error(configFile + " is invalid.");
       } else {
         this.endpoint = "http://" + config.host + ":" + config.port;
+        LOG.info("Aurora-scheduler uses HttpOfferSet for scheduling at "
+            + this.endpoint);
       }
     }
   }
@@ -58,9 +64,25 @@ public class PluginConfig {
     return this.endpoint;
   }
 
+  public boolean isDebug() {
+    if (config != null) {
+      return this.config.debug;
+    }
+    return false;
+  }
+
+  public int getLogStepInTaskNum() {
+    if (config != null) {
+      return this.config.logStepInTaskNum;
+    }
+    return DEFAULT_LOG_STEP;
+  }
+
   // for parsing json config file.
   static class Config {
     String host;
     int port;
+    boolean debug = false;
+    int logStepInTaskNum = DEFAULT_LOG_STEP;
   }
 }

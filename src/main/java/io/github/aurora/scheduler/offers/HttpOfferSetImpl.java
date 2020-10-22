@@ -11,7 +11,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.paypal.aurora.scheduler.offers;
+package io.github.aurora.scheduler.offers;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -43,17 +43,23 @@ import org.slf4j.LoggerFactory;
  * Implementation for OfferSet.
  */
 @VisibleForTesting
-public class MagicMatchOfferSetImpl implements OfferSet {
+public class HttpOfferSetImpl implements OfferSet {
 
   private final Set<HostOffer> offers;
-  private static final Logger LOG = LoggerFactory.getLogger(MagicMatchOfferSetImpl.class);
-  private PluginConfig plugin = null;
+  private static final Logger LOG = LoggerFactory.getLogger(HttpOfferSetImpl.class);
+  private HttpPluginConfig plugin = null;
   private final Gson gson;
+  private long numOfTasks;
+  private long totalSchedTime;
+  private long currTotalSchedTime;
+  private long worstSchedTime;
+  private long currWorstSchedTime;
 
   @Inject
-  public MagicMatchOfferSetImpl(Ordering<HostOffer> ordering) {
+  public HttpOfferSetImpl(Ordering<HostOffer> ordering) {
     offers = new ConcurrentSkipListSet<>(ordering);
     gson = new Gson();
+    plugin = new HttpPluginConfig();
   }
 
   @Override
@@ -84,22 +90,67 @@ public class MagicMatchOfferSetImpl implements OfferSet {
     return offers;
   }
 
+  // monitor prints the scheduling time statistics
+  private void monitor(long startTime) {
+    numOfTasks++;
+    long timeElapsed = System.nanoTime() - startTime;
+    totalSchedTime += timeElapsed;
+    if (worstSchedTime < timeElapsed) {
+      worstSchedTime = timeElapsed;
+    }
+    if (numOfTasks == plugin.getLogStepInTaskNum()) {
+      //numOfTasks,currTotalSchedTime,currWorstSchedTime,totalSchedTime,worstSchedTime
+      String msg = numOfTasks + "," + currTotalSchedTime + "," + currWorstSchedTime + ","
+          + totalSchedTime + "," + worstSchedTime;
+      LOG.info(msg);
+      numOfTasks = 0;
+      currTotalSchedTime = 0;
+      currWorstSchedTime = 0;
+    }
+  }
+
   @Override
   public Iterable<HostOffer> getOrdered(TaskGroupKey groupKey, ResourceRequest resourceRequest) {
+    if (plugin == null) {
+      plugin = new HttpPluginConfig();
+    }
+    long current = System.nanoTime();
     List<HostOffer> orderedOffers = getOffersFromPlugin(resourceRequest);
+    if (plugin.isDebug()) {
+      this.monitor(current);
+    }
     if (orderedOffers != null) {
       return orderedOffers;
     }
     // fall back to default scheduler.
-    LOG.warn("MagicMatch failed to schedule the task. Falling back on default ordering.");
+    LOG.warn("Failed to schedule the task. Falling back on default ordering.");
     return offers;
+  }
+
+  //createScheduleRequest creates the ScheduleRequest to be sent out to the plugin.
+  private ScheduleRequest createScheduleRequest(ResourceRequest resourceRequest) {
+    Resource req = new Resource(resourceRequest.getResourceBag().valueOf(ResourceType.CPUS),
+        resourceRequest.getResourceBag().valueOf(ResourceType.RAM_MB),
+        resourceRequest.getResourceBag().valueOf(ResourceType.DISK_MB));
+    Host[] hosts = new Host[Iterables.size(offers)];
+    int i = 0;
+    for (HostOffer offer : offers) {
+      hosts[i] = new Host();
+      hosts[i].name = offer.getAttributes().getHost();
+      double cpu = offer.getResourceBag(true).valueOf(ResourceType.CPUS)
+          + offer.getResourceBag(false).valueOf(ResourceType.CPUS);
+      double memory = offer.getResourceBag(true).valueOf(ResourceType.RAM_MB)
+          + offer.getResourceBag(false).valueOf(ResourceType.RAM_MB);
+      double disk = offer.getResourceBag(true).valueOf(ResourceType.DISK_MB)
+          + offer.getResourceBag(false).valueOf(ResourceType.DISK_MB);
+      hosts[i].offer = new Resource(cpu, memory, disk);
+      i++;
+    }
+    return new ScheduleRequest(req, hosts);
   }
 
   // getOffersFromPlugin gets the offers from MagicMatch.
   private List<HostOffer> getOffersFromPlugin(ResourceRequest resourceRequest) {
-    if (plugin == null) {
-      plugin = new PluginConfig();
-    }
     List<HostOffer> orderedOffers = new ArrayList<>();
     Map<String, HostOffer> offerMap = new HashMap<>();
     for (HostOffer offer : offers) {
@@ -115,24 +166,7 @@ public class MagicMatchOfferSetImpl implements OfferSet {
     }
 
     // create json request
-    Resource req = new Resource(resourceRequest.getResourceBag().valueOf(ResourceType.CPUS),
-                          resourceRequest.getResourceBag().valueOf(ResourceType.RAM_MB),
-                          resourceRequest.getResourceBag().valueOf(ResourceType.DISK_MB));
-    Host[] hosts = new Host[Iterables.size(offers)];
-    int i = 0;
-    for (HostOffer offer : offers) {
-      hosts[i] = new Host();
-      hosts[i].name = offer.getAttributes().getHost();
-      double cpu = offer.getResourceBag(true).valueOf(ResourceType.CPUS)
-          + offer.getResourceBag(false).valueOf(ResourceType.CPUS);
-      double memory = offer.getResourceBag(true).valueOf(ResourceType.RAM_MB)
-          + offer.getResourceBag(false).valueOf(ResourceType.RAM_MB);
-      double disk = offer.getResourceBag(true).valueOf(ResourceType.DISK_MB)
-          + offer.getResourceBag(false).valueOf(ResourceType.DISK_MB);
-      hosts[i].offer = new Resource(cpu, memory, disk);
-      i++;
-    }
-    ScheduleRequest scheduleRequest = new ScheduleRequest(req, hosts);
+    ScheduleRequest scheduleRequest = createScheduleRequest(resourceRequest);
     LOG.debug(scheduleRequest.toString());
 
     // create connection
@@ -178,8 +212,10 @@ public class MagicMatchOfferSetImpl implements OfferSet {
     ScheduleResponse scheduleResponse = gson.fromJson(response.toString(), ScheduleResponse.class);
     LOG.debug("plugin response: " + response.toString());
 
-    // process the scheduleResult
+    // process the scheduleResponse
     if (scheduleResponse.error.equals("") && scheduleResponse.hosts != null) {
+      StringBuffer offersStr = new StringBuffer();
+      int c = 0;
       for (String host : scheduleResponse.hosts) {
         HostOffer offer = offerMap.get(host);
         if (offer == null) {
@@ -187,10 +223,18 @@ public class MagicMatchOfferSetImpl implements OfferSet {
         } else {
           orderedOffers.add(offer);
         }
+        if (c < 5) {
+          offersStr.append(host + ",");
+          c++;
+        }
+      }
+      if (scheduleResponse.hosts.length > 0) {
+        offersStr.append("...");
+        LOG.info("Sorted offers: " + offersStr.toString());
       }
       return orderedOffers;
     }
-    LOG.error("Unable to get sorted offers from MagicMatch due to " + scheduleResponse.error);
+    LOG.error("Unable to get sorted offers due to " + scheduleResponse.error);
     return null;
   }
 
