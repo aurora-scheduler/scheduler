@@ -111,9 +111,6 @@ public class HttpOfferSetImpl implements OfferSet {
 
   @Override
   public Iterable<HostOffer> getOrdered(TaskGroupKey groupKey, ResourceRequest resourceRequest) {
-    if (plugin == null) {
-      plugin = new HttpPluginConfig();
-    }
     long current = System.nanoTime();
     List<HostOffer> orderedOffers = getOffersFromPlugin(resourceRequest);
     if (plugin.isDebug()) {
