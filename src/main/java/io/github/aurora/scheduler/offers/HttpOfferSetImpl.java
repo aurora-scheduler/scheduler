@@ -19,7 +19,6 @@ import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.ProtocolException;
-import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.ConcurrentSkipListSet;
@@ -45,20 +44,25 @@ import org.slf4j.LoggerFactory;
 @VisibleForTesting
 public class HttpOfferSetImpl implements OfferSet {
 
-  private final Set<HostOffer> offers;
   private static final Logger LOG = LoggerFactory.getLogger(HttpOfferSetImpl.class);
-  private final HttpPluginConfig plugin = new HttpPluginConfig();
+  private final Set<HostOffer> offers;
   private final Gson gson;
   private long numOfTasks;
   private long totalSchedTime;
   private long currTotalSchedTime;
   private long worstSchedTime;
   private long currWorstSchedTime;
+  private HttpPluginConfig plugin;
 
   @Inject
   public HttpOfferSetImpl(Ordering<HostOffer> ordering) {
     offers = new ConcurrentSkipListSet<>(ordering);
     gson = new Gson();
+    try {
+      plugin = new HttpPluginConfig();
+    } catch (MalformedURLException e) {
+      LOG.error("URL of Config Plugin is malformed.\n" + e);
+    }
   }
 
   @Override
@@ -98,7 +102,6 @@ public class HttpOfferSetImpl implements OfferSet {
       worstSchedTime = timeElapsed;
     }
     if (numOfTasks == plugin.getLogStepInTaskNum()) {
-      //numOfTasks,currTotalSchedTime,currWorstSchedTime,totalSchedTime,worstSchedTime
       String msg = numOfTasks + "," + currTotalSchedTime + "," + currWorstSchedTime + ","
           + totalSchedTime + "," + worstSchedTime;
       LOG.info(msg);
@@ -110,13 +113,17 @@ public class HttpOfferSetImpl implements OfferSet {
 
   @Override
   public Iterable<HostOffer> getOrdered(TaskGroupKey groupKey, ResourceRequest resourceRequest) {
-    long current = System.nanoTime();
-    List<HostOffer> orderedOffers = getOffersFromPlugin(resourceRequest);
-    if (plugin.isDebug()) {
-      this.monitor(current);
-    }
-    if (orderedOffers != null) {
-      return orderedOffers;
+    if (plugin != null) {
+      long current = System.nanoTime();
+      List<HostOffer> orderedOffers = getOffersFromPlugin(resourceRequest);
+      if (plugin.isDebug()) {
+        this.monitor(current);
+      }
+      if (orderedOffers == null) {
+        LOG.warn("Unable to get orderedOffers from the external plugin.");
+      } else {
+        return orderedOffers;
+      }
     }
     // fall back to default scheduler.
     LOG.warn("Failed to schedule the task. Falling back on default ordering.");
@@ -152,23 +159,14 @@ public class HttpOfferSetImpl implements OfferSet {
     for (HostOffer offer : offers) {
       offerMap.put(offer.getAttributes().getHost(), offer);
     }
-    // send the Rest API request to the scheduler plugin
-    URL url;
-    try {
-      url = new URL(plugin.getEndpoint() + "/v1/offerset");
-    } catch (MalformedURLException e) {
-      LOG.error(e.toString());
-      return null;
-    }
-
-    // create json request
+    // create json request & send the Rest API request to the scheduler plugin
     ScheduleRequest scheduleRequest = createScheduleRequest(resourceRequest);
     LOG.debug(scheduleRequest.toString());
 
     // create connection
     HttpURLConnection con;
     try {
-      con = (HttpURLConnection) url.openConnection();
+      con = (HttpURLConnection) plugin.getUrl().openConnection();
       con.setRequestMethod("POST");
       con.setRequestProperty("Content-Type", "application/json; utf-8");
       con.setRequestProperty("Accept", "application/json");

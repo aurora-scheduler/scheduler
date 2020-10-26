@@ -15,6 +15,8 @@ package io.github.aurora.scheduler.offers;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
 
 import com.google.gson.Gson;
@@ -23,45 +25,50 @@ import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * HttpPluginConfig is used to represent the configuration this HttpOfferSetModule.
+ * It has the host & port of the external scheduling unit that this plugin communicates with.
+ * It loads the configuration from a file. An file example is as follows.
+ *  http-plugin.json file:
+ *   {
+ *     "url": "http://localhost:9090/v1/offerset",
+ *     "debug": true,
+ *     "logStepInTaskNum": 100
+ *   }
+ */
 public class HttpPluginConfig {
   private static final Logger LOG = LoggerFactory.getLogger(HttpPluginConfig.class);
-  private String endpoint = "http://localhost:9090";
-  private Config config;
   private static final int DEFAULT_LOG_STEP = 1000;
-  /*
-    aurora-plugin.json file:
-    {
-      "host": "localhost",
-      "port": 9090,
-      "debug": true,
-      "logStepInTaskNum": 100
-    }
-   */
-  public HttpPluginConfig() {
-    final String configFile = "/etc/aurora-scheduler/http-endpoint.json";
+
+  public static final String CONFIG_FILE = "/etc/aurora-scheduler/http-endpoint.json";
+
+  private URL url;
+  private Config config;
+
+  public HttpPluginConfig() throws MalformedURLException {
     // load file
     String jsonStr = null;
     try {
-      jsonStr = FileUtils.readFileToString(new File(configFile), StandardCharsets.UTF_8);
+      jsonStr = FileUtils.readFileToString(new File(CONFIG_FILE), StandardCharsets.UTF_8);
     } catch (IOException io) {
-      LOG.error("Cannot load " + configFile + "\n " + io.toString());
+      LOG.error("Cannot load " + CONFIG_FILE + "\n " + io.toString());
     }
     if (jsonStr == null || "".equals(jsonStr)) {
-      LOG.error(configFile + " is empty");
+      LOG.error(CONFIG_FILE + " is empty");
     } else {
       config = new Gson().fromJson(jsonStr, Config.class);
       if (config == null) {
-        LOG.error(configFile + " is invalid.");
+        LOG.error(CONFIG_FILE + " is invalid.");
       } else {
-        this.endpoint = "http://" + config.host + ":" + config.port;
-        LOG.info("Aurora-scheduler uses HttpOfferSet for scheduling at "
-            + this.endpoint);
+        this.url = new URL(config.url);
+        LOG.info("Aurora-scheduler uses HttpOfferSet for scheduling via uri:"
+            + this.url);
       }
     }
   }
 
-  public String getEndpoint() {
-    return this.endpoint;
+  public URL getUrl() {
+    return this.url;
   }
 
   public boolean isDebug() {
@@ -80,8 +87,7 @@ public class HttpPluginConfig {
 
   // for parsing json config file.
   static class Config {
-    String host;
-    int port;
+    String url;
     boolean debug = false;
     int logStepInTaskNum = DEFAULT_LOG_STEP;
   }
