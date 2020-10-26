@@ -44,6 +44,7 @@ public class HttpPluginConfig {
 
   private URL url;
   private Config config;
+  private int timeoutSeconds;
 
   public HttpPluginConfig() throws MalformedURLException {
     // load file
@@ -61,13 +62,20 @@ public class HttpPluginConfig {
         LOG.error(CONFIG_FILE + " is invalid.");
       } else {
         this.url = new URL(config.url);
-        LOG.info("Aurora-scheduler uses HttpOfferSetModule " + this.url);
+        this.timeoutSeconds = config.timeoutSeconds;
+        LOG.info("HttpOfferSetModule url: " + this.url
+               + ", timeout (seconds): " + this.timeoutSeconds + "\n");
       }
     }
   }
 
   public URL getUrl() {
     return this.url;
+  }
+
+  // getTimeout returns timeout in milliseconds.
+  public int getTimeout() {
+    return this.timeoutSeconds * 1000;
   }
 
   public boolean isDebug() {
@@ -89,5 +97,6 @@ public class HttpPluginConfig {
     String url;
     boolean debug = false;
     int logStepInTaskNum = DEFAULT_LOG_STEP;
+    int timeoutSeconds;
   }
 }

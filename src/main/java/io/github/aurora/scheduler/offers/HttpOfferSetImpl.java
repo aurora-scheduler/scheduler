@@ -24,7 +24,6 @@ import java.util.*;
 import java.util.concurrent.ConcurrentSkipListSet;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.Iterables;
 import com.google.common.collect.Ordering;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
@@ -135,19 +134,18 @@ public class HttpOfferSetImpl implements OfferSet {
     Resource req = new Resource(resourceRequest.getResourceBag().valueOf(ResourceType.CPUS),
         resourceRequest.getResourceBag().valueOf(ResourceType.RAM_MB),
         resourceRequest.getResourceBag().valueOf(ResourceType.DISK_MB));
-    Host[] hosts = new Host[Iterables.size(offers)];
-    int i = 0;
+    List<Host> hosts = new LinkedList<>();
     for (HostOffer offer : offers) {
-      hosts[i] = new Host();
-      hosts[i].name = offer.getAttributes().getHost();
+      Host host = new Host();
+      host.name = offer.getAttributes().getHost();
       double cpu = offer.getResourceBag(true).valueOf(ResourceType.CPUS)
           + offer.getResourceBag(false).valueOf(ResourceType.CPUS);
       double memory = offer.getResourceBag(true).valueOf(ResourceType.RAM_MB)
           + offer.getResourceBag(false).valueOf(ResourceType.RAM_MB);
       double disk = offer.getResourceBag(true).valueOf(ResourceType.DISK_MB)
           + offer.getResourceBag(false).valueOf(ResourceType.DISK_MB);
-      hosts[i].offer = new Resource(cpu, memory, disk);
-      i++;
+      host.offer = new Resource(cpu, memory, disk);
+      hosts.add(host);
     }
     return new ScheduleRequest(req, hosts);
   }
@@ -167,6 +165,8 @@ public class HttpOfferSetImpl implements OfferSet {
     HttpURLConnection con;
     try {
       con = (HttpURLConnection) plugin.getUrl().openConnection();
+      con.setConnectTimeout(plugin.getTimeout());
+      con.setReadTimeout(plugin.getTimeout());
       con.setRequestMethod("POST");
       con.setRequestProperty("Content-Type", "application/json; utf-8");
       con.setRequestProperty("Accept", "application/json");
@@ -183,9 +183,6 @@ public class HttpOfferSetImpl implements OfferSet {
     try (OutputStream os = con.getOutputStream()) {
       byte[] input = jsonStr.getBytes(StandardCharsets.UTF_8);
       os.write(input, 0, input.length);
-    } catch (UnsupportedEncodingException uee) {
-      LOG.error("ScheduleRequest json is not valid. " + jsonStr, uee);
-      return null;
     } catch (IOException ioe) {
       LOG.error("Unable to send scheduleRequest to http endpoint " + plugin.getUrl(), ioe);
       return null;
@@ -208,8 +205,6 @@ public class HttpOfferSetImpl implements OfferSet {
 
     // process the scheduleResponse
     if (scheduleResponse.error.equals("") && scheduleResponse.hosts != null) {
-      StringBuffer offersStr = new StringBuffer();
-      int c = 0;
       for (String host : scheduleResponse.hosts) {
         HostOffer offer = offerMap.get(host);
         if (offer == null) {
@@ -217,15 +212,9 @@ public class HttpOfferSetImpl implements OfferSet {
         } else {
           orderedOffers.add(offer);
         }
-        if (c < 5) {
-          offersStr.append(host + ",");
-          c++;
-        }
       }
-      if (scheduleResponse.hosts.length > 0) {
-        offersStr.append("...");
-        LOG.info("Sorted offers: " + offersStr.toString());
-      }
+      LOG.info("Sorted offers: " + String.join(",",
+          scheduleResponse.hosts.subList(0, Math.min(5, scheduleResponse.hosts.size())) + "..."));
       return orderedOffers;
     }
     LOG.error("Unable to get sorted offers due to " + scheduleResponse.error);
@@ -264,28 +253,28 @@ public class HttpOfferSetImpl implements OfferSet {
   // ScheduleRequest is the request sent to MagicMatch.
   static class ScheduleRequest {
     Resource request;
-    Host[] hosts;
+    List<Host> hosts;
 
-    ScheduleRequest(Resource request, Host... hosts) {
+    ScheduleRequest(Resource request, List<Host> hosts) {
       this.request = request;
       this.hosts = hosts;
     }
 
     @Override
     public String toString() {
-      return "ScheduleRequest{" + "request=" + request + ", hosts=" + Arrays.toString(hosts) + '}';
+      return "ScheduleRequest{" + "request=" + request + ", hosts=" + hosts + '}';
     }
   }
 
   // ScheduleResponse is the scheduling result responded by MagicMatch
   static class ScheduleResponse {
     String error;
-    String[] hosts;
+    List<String> hosts;
 
     @Override
     public String toString() {
       return "ScheduleResponse{" + "error='" + error + '\'' + ", hosts="
-          + Arrays.toString(hosts) + '}';
+          + hosts + '}';
     }
   }
 }
