@@ -37,7 +37,7 @@ public class HttpOfferSetModule extends AbstractModule {
 
   @Override
   protected void configure() {
-    LOG.info("MagicMatch OfferSet Module Enabled.");
+    LOG.info("HttpOfferSetModule Enabled.");
     install(new PrivateModule() {
       @Override
       protected void configure() {

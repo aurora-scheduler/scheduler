@@ -61,7 +61,7 @@ public class HttpOfferSetImpl implements OfferSet {
     try {
       plugin = new HttpPluginConfig();
     } catch (MalformedURLException e) {
-      LOG.error("URL of Config Plugin is malformed.\n" + e);
+      LOG.error("URL of Config Plugin is malformed.", e);
     }
   }
 
@@ -172,10 +172,10 @@ public class HttpOfferSetImpl implements OfferSet {
       con.setRequestProperty("Accept", "application/json");
       con.setDoOutput(true);
     } catch (ProtocolException pe) {
-      LOG.error("The HTTP protocol was not setup correctly. \n" + pe.toString());
+      LOG.error("The HTTP protocol was not setup correctly.", pe);
       return null;
     } catch (IOException ioe) {
-      LOG.error("Unable to open HTTP connection. \n" + ioe.toString());
+      LOG.error("Unable to open HTTP connection.", ioe);
       return null;
     }
     String jsonStr = gson.toJson(scheduleRequest);
@@ -184,10 +184,10 @@ public class HttpOfferSetImpl implements OfferSet {
       byte[] input = jsonStr.getBytes(StandardCharsets.UTF_8);
       os.write(input, 0, input.length);
     } catch (UnsupportedEncodingException uee) {
-      LOG.error("ScheduleRequest json is not valid.\n" + uee.toString());
+      LOG.error("ScheduleRequest json is not valid. " + jsonStr, uee);
       return null;
     } catch (IOException ioe) {
-      LOG.error("Unable to send scheduleRequest to MagicMatch .\n" + ioe.toString());
+      LOG.error("Unable to send scheduleRequest to http endpoint " + plugin.getUrl(), ioe);
       return null;
     }
 
@@ -197,10 +197,10 @@ public class HttpOfferSetImpl implements OfferSet {
       String responseLine = IOUtils.toString(con.getInputStream(), StandardCharsets.UTF_8);
       response.append(responseLine.trim());
     } catch (UnsupportedEncodingException uee) {
-      LOG.error("MagicMatch response is not valid.\n" + uee.toString());
+      LOG.error("Response is not valid.", uee);
       return null;
     } catch (IOException ioe) {
-      LOG.error("Unable to read the response from MagicMatch.\n" + ioe.toString());
+      LOG.error("Unable to read the response from the http-plugin.", ioe);
       return null;
     }
     ScheduleResponse scheduleResponse = gson.fromJson(response.toString(), ScheduleResponse.class);

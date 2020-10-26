@@ -61,8 +61,7 @@ public class HttpPluginConfig {
         LOG.error(CONFIG_FILE + " is invalid.");
       } else {
         this.url = new URL(config.url);
-        LOG.info("Aurora-scheduler uses HttpOfferSet for scheduling via uri:"
-            + this.url);
+        LOG.info("Aurora-scheduler uses HttpOfferSetModule " + this.url);
       }
     }
   }
