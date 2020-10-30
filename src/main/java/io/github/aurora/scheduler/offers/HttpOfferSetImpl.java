@@ -101,10 +101,10 @@ public class HttpOfferSetImpl implements OfferSet {
     if (worstSchedTime < timeElapsed) {
       worstSchedTime = timeElapsed;
     }
-    if (currWorstSchedTime<timeElapsed) {
+    if (currWorstSchedTime < timeElapsed) {
       currWorstSchedTime = timeElapsed;
     }
-    if (numOfTasks % plugin.getLogStepInTaskNum()==0) {
+    if (numOfTasks % plugin.getLogStepInTaskNum() == 0) {
       String msg = numOfTasks + "," + currTotalSchedTime + "," + currWorstSchedTime + ","
           + totalSchedTime + "," + worstSchedTime;
       LOG.info(msg);
