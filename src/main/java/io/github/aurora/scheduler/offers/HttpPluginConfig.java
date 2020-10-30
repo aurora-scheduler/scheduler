@@ -44,7 +44,8 @@ public class HttpPluginConfig {
 
   private URL url;
   private Config config;
-  private int timeoutSeconds;
+  private int timeoutMillisec;
+  private boolean ready;
 
   public HttpPluginConfig() throws MalformedURLException {
     // load file
@@ -62,9 +63,10 @@ public class HttpPluginConfig {
         LOG.error(CONFIG_FILE + " is invalid.");
       } else {
         this.url = new URL(config.url);
-        this.timeoutSeconds = config.timeoutSeconds;
+        this.timeoutMillisec = config.timeoutMillisec;
+        this.ready = true;
         LOG.info("HttpOfferSetModule url: " + this.url
-               + ", timeout (seconds): " + this.timeoutSeconds + "\n");
+               + ", timeout (seconds): " + this.timeoutMillisec + "\n");
       }
     }
   }
@@ -73,9 +75,13 @@ public class HttpPluginConfig {
     return this.url;
   }
 
+  public boolean isReady() {
+    return this.ready;
+  }
+
   // getTimeout returns timeout in milliseconds.
   public int getTimeout() {
-    return this.timeoutSeconds * 1000;
+    return this.timeoutMillisec;
   }
 
   public boolean isDebug() {
@@ -97,6 +103,6 @@ public class HttpPluginConfig {
     String url;
     boolean debug = false;
     int logStepInTaskNum = DEFAULT_LOG_STEP;
-    int timeoutSeconds;
+    int timeoutMillisec;
   }
 }

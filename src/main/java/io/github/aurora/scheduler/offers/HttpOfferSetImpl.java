@@ -97,14 +97,17 @@ public class HttpOfferSetImpl implements OfferSet {
     numOfTasks++;
     long timeElapsed = System.nanoTime() - startTime;
     totalSchedTime += timeElapsed;
+    currTotalSchedTime += timeElapsed;
     if (worstSchedTime < timeElapsed) {
       worstSchedTime = timeElapsed;
     }
-    if (numOfTasks == plugin.getLogStepInTaskNum()) {
+    if (currWorstSchedTime<timeElapsed) {
+      currWorstSchedTime = timeElapsed;
+    }
+    if (numOfTasks % plugin.getLogStepInTaskNum()==0) {
       String msg = numOfTasks + "," + currTotalSchedTime + "," + currWorstSchedTime + ","
           + totalSchedTime + "," + worstSchedTime;
       LOG.info(msg);
-      numOfTasks = 0;
       currTotalSchedTime = 0;
       currWorstSchedTime = 0;
     }
@@ -112,7 +115,7 @@ public class HttpOfferSetImpl implements OfferSet {
 
   @Override
   public Iterable<HostOffer> getOrdered(TaskGroupKey groupKey, ResourceRequest resourceRequest) {
-    if (plugin != null) {
+    if (plugin != null && plugin.isReady()) {
       long current = System.nanoTime();
       List<HostOffer> orderedOffers = getOffersFromPlugin(resourceRequest);
       if (plugin.isDebug()) {
@@ -208,12 +211,12 @@ public class HttpOfferSetImpl implements OfferSet {
       for (String host : scheduleResponse.hosts) {
         HostOffer offer = offerMap.get(host);
         if (offer == null) {
-          LOG.error("Cannot find this host " + host + " in " + offerMap.toString());
+          LOG.warn("Cannot find host " + host + " in the response");
         } else {
           orderedOffers.add(offer);
         }
       }
-      LOG.info("Sorted offers: " + String.join(",",
+      LOG.debug("Sorted offers: " + String.join(",",
           scheduleResponse.hosts.subList(0, Math.min(5, scheduleResponse.hosts.size())) + "..."));
       return orderedOffers;
     }
