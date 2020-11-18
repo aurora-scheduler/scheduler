@@ -16,12 +16,17 @@ package io.github.aurora.scheduler.offers;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
+import java.lang.annotation.Retention;
+import java.lang.annotation.Target;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.ProtocolException;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.ConcurrentSkipListSet;
+
+import javax.inject.Qualifier;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Ordering;
@@ -33,9 +38,15 @@ import org.apache.aurora.scheduler.filter.SchedulingFilter.ResourceRequest;
 import org.apache.aurora.scheduler.offers.HostOffer;
 import org.apache.aurora.scheduler.offers.OfferSet;
 import org.apache.aurora.scheduler.resources.ResourceType;
+import org.apache.aurora.scheduler.storage.entities.IJobKey;
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import static java.lang.annotation.ElementType.FIELD;
+import static java.lang.annotation.ElementType.METHOD;
+import static java.lang.annotation.ElementType.PARAMETER;
+import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 /**
  * Implementation for OfferSet.
@@ -46,22 +57,46 @@ public class HttpOfferSetImpl implements OfferSet {
   private static final Logger LOG = LoggerFactory.getLogger(HttpOfferSetImpl.class);
   private final Set<HostOffer> offers;
   private final Gson gson;
-  private long numOfTasks;
-  private long totalSchedTime;
-  private long currTotalSchedTime;
-  private long worstSchedTime;
-  private long currWorstSchedTime;
-  private HttpPluginConfig plugin;
+  private Integer timeoutMs;
+  private URL endpoint;
+  private boolean enabled;
+
+  public HttpOfferSetImpl() {
+    offers = new HashSet<>();
+    gson = new Gson();
+  }
+
+  @VisibleForTesting
+  @Qualifier
+  @Target({ FIELD, PARAMETER, METHOD }) @Retention(RUNTIME)
+  @interface Endpoint { }
+
+  @VisibleForTesting
+  @Qualifier
+  @Target({ FIELD, PARAMETER, METHOD }) @Retention(RUNTIME)
+  @interface TimeoutMs { }
 
   @Inject
-  public HttpOfferSetImpl(Ordering<HostOffer> ordering) {
+  public HttpOfferSetImpl(Ordering<HostOffer> ordering,
+                          @TimeoutMs Integer timeoutMs,
+                          @Endpoint String url) {
     offers = new ConcurrentSkipListSet<>(ordering);
     gson = new Gson();
+    enabled = true;
     try {
-      plugin = new HttpPluginConfig();
+      endpoint = new URL(url);
     } catch (MalformedURLException e) {
-      LOG.error("URL of Config Plugin is malformed.", e);
+      LOG.error("http_offer_set_endpoint is malformed. ", e);
+      enabled = false;
     }
+    if (enabled) {
+      LOG.info("HttpOfferSetModule Enabled.");
+    } else {
+      LOG.info("HttpOfferSetModule Disabled.");
+    }
+    this.timeoutMs = timeoutMs;
+    LOG.info("HttpOfferSet's endpoint: " + this.endpoint);
+    LOG.info("HttpOfferSet's timeout: " + this.timeoutMs + " (ms)");
   }
 
   @Override
@@ -92,48 +127,39 @@ public class HttpOfferSetImpl implements OfferSet {
     return offers;
   }
 
-  // monitor prints the scheduling time statistics
-  private void monitor(long startTime) {
-    numOfTasks++;
-    long timeElapsed = System.nanoTime() - startTime;
-    totalSchedTime += timeElapsed;
-    currTotalSchedTime += timeElapsed;
-    if (worstSchedTime < timeElapsed) {
-      worstSchedTime = timeElapsed;
-    }
-    if (currWorstSchedTime < timeElapsed) {
-      currWorstSchedTime = timeElapsed;
-    }
-    if (numOfTasks % plugin.getLogStepInTaskNum() == 0) {
-      String msg = numOfTasks + "," + currTotalSchedTime + "," + currWorstSchedTime + ","
-          + totalSchedTime + "," + worstSchedTime;
-      LOG.info(msg);
-      currTotalSchedTime = 0;
-      currWorstSchedTime = 0;
-    }
-  }
-
   @Override
   public Iterable<HostOffer> getOrdered(TaskGroupKey groupKey, ResourceRequest resourceRequest) {
-    if (plugin != null && plugin.isReady()) {
-      long current = System.nanoTime();
-      List<HostOffer> orderedOffers = getOffersFromPlugin(resourceRequest);
-      if (plugin.isDebug()) {
-        this.monitor(current);
-      }
-      if (orderedOffers == null) {
-        LOG.warn("Unable to get orderedOffers from the external plugin.");
-      } else {
-        return orderedOffers;
-      }
+    // if there are no available offers, do nothing.
+    if (offers.isEmpty() || !this.enabled) {
+      return offers;
+    }
+
+    List<HostOffer> orderedOffers = null;
+    try {
+      long startTime = System.nanoTime();
+      // create json request & send the Rest API request to the scheduler plugin
+      ScheduleRequest scheduleRequest = this.createRequest(resourceRequest, startTime);
+      LOG.info("Sending request " + scheduleRequest.jobKey);
+      String responseStr = this.sendRequest(scheduleRequest);
+      orderedOffers = processResponse(responseStr);
+      LOG.info("received response for " + scheduleRequest.jobKey);
+      HttpOfferSetModule.latencyMsList.add(System.nanoTime() - startTime);
+    } catch (IOException e) {
+      LOG.error("Failed to schedule the task of "
+          + resourceRequest.getTask().getJob().toString()
+          + " using HttpOfferSet. ", e);
+      HttpOfferSetModule.incFailureCount();
+    }
+    if (orderedOffers != null) {
+      return orderedOffers;
     }
     // fall back to default scheduler.
-    LOG.warn("Failed to schedule the task. Falling back on default ordering.");
+    LOG.warn("Falling back on default ordering.");
     return offers;
   }
 
   //createScheduleRequest creates the ScheduleRequest to be sent out to the plugin.
-  private ScheduleRequest createScheduleRequest(ResourceRequest resourceRequest) {
+  private ScheduleRequest createRequest(ResourceRequest resourceRequest, long startTime) {
     Resource req = new Resource(resourceRequest.getResourceBag().valueOf(ResourceType.CPUS),
         resourceRequest.getResourceBag().valueOf(ResourceType.RAM_MB),
         resourceRequest.getResourceBag().valueOf(ResourceType.DISK_MB));
@@ -150,36 +176,31 @@ public class HttpOfferSetImpl implements OfferSet {
       host.offer = new Resource(cpu, memory, disk);
       hosts.add(host);
     }
-    return new ScheduleRequest(req, hosts);
+    IJobKey jobKey = resourceRequest.getTask().getJob();
+    String jobKeyStr = jobKey.getRole() + "-" + jobKey.getEnvironment() + "-" + jobKey.getName()
+            + "@" + startTime;
+    return new ScheduleRequest(req, hosts, jobKeyStr);
   }
 
-  // getOffersFromPlugin gets the offers from MagicMatch.
-  private List<HostOffer> getOffersFromPlugin(ResourceRequest resourceRequest) {
-    List<HostOffer> orderedOffers = new ArrayList<>();
-    Map<String, HostOffer> offerMap = new HashMap<>();
-    for (HostOffer offer : offers) {
-      offerMap.put(offer.getAttributes().getHost(), offer);
-    }
-    // create json request & send the Rest API request to the scheduler plugin
-    ScheduleRequest scheduleRequest = createScheduleRequest(resourceRequest);
-    LOG.debug(scheduleRequest.toString());
-
+  // sendRequest sends resorceRequest to the external plugin endpoint and gets json response.
+  private String sendRequest(ScheduleRequest scheduleRequest) throws IOException {
+    LOG.debug("Sending request for " + scheduleRequest.toString());
     // create connection
     HttpURLConnection con;
     try {
-      con = (HttpURLConnection) plugin.getUrl().openConnection();
-      con.setConnectTimeout(plugin.getTimeout());
-      con.setReadTimeout(plugin.getTimeout());
+      con = (HttpURLConnection) this.endpoint.openConnection();
+      con.setConnectTimeout(this.timeoutMs);
+      con.setReadTimeout(this.timeoutMs);
       con.setRequestMethod("POST");
       con.setRequestProperty("Content-Type", "application/json; utf-8");
       con.setRequestProperty("Accept", "application/json");
       con.setDoOutput(true);
     } catch (ProtocolException pe) {
-      LOG.error("The HTTP protocol was not setup correctly.", pe);
-      return null;
+      LOG.error("The HTTP protocol was not setup correctly.");
+      throw pe;
     } catch (IOException ioe) {
-      LOG.error("Unable to open HTTP connection.", ioe);
-      return null;
+      LOG.error("Unable to open HTTP connection.");
+      throw ioe;
     }
     String jsonStr = gson.toJson(scheduleRequest);
     LOG.debug("request to plugin: " + jsonStr);
@@ -187,8 +208,9 @@ public class HttpOfferSetImpl implements OfferSet {
       byte[] input = jsonStr.getBytes(StandardCharsets.UTF_8);
       os.write(input, 0, input.length);
     } catch (IOException ioe) {
-      LOG.error("Unable to send scheduleRequest to http endpoint " + plugin.getUrl(), ioe);
-      return null;
+      LOG.error("Unable to send scheduleRequest to http endpoint "
+              + this.endpoint, ioe);
+      throw ioe;
     }
 
     // read response
@@ -198,30 +220,49 @@ public class HttpOfferSetImpl implements OfferSet {
       response.append(responseLine.trim());
     } catch (UnsupportedEncodingException uee) {
       LOG.error("Response is not valid.", uee);
-      return null;
+      throw uee;
     } catch (IOException ioe) {
       LOG.error("Unable to read the response from the http-plugin.", ioe);
-      return null;
+      throw ioe;
     }
-    ScheduleResponse scheduleResponse = gson.fromJson(response.toString(), ScheduleResponse.class);
-    LOG.debug("plugin response: " + response.toString());
+    return response.toString();
+  }
 
-    // process the scheduleResponse
-    if (scheduleResponse.error.equals("") && scheduleResponse.hosts != null) {
-      for (String host : scheduleResponse.hosts) {
-        HostOffer offer = offerMap.get(host);
-        if (offer == null) {
-          LOG.warn("Cannot find host " + host + " in the response");
-        } else {
-          orderedOffers.add(offer);
-        }
-      }
-      LOG.debug("Sorted offers: " + String.join(",",
-          scheduleResponse.hosts.subList(0, Math.min(5, scheduleResponse.hosts.size())) + "..."));
-      return orderedOffers;
+  List<HostOffer> processResponse(String responseStr) throws IOException {
+    // process the response
+    ScheduleResponse response = gson.fromJson(responseStr, ScheduleResponse.class);
+    LOG.debug("Response: " + responseStr);
+    Map<String, HostOffer> offerMap = new HashMap<>();
+    for (HostOffer offer : offers) {
+      offerMap.put(offer.getAttributes().getHost(), offer);
     }
-    LOG.error("Unable to get sorted offers due to " + scheduleResponse.error);
-    return null;
+    List<HostOffer> orderedOffers = new ArrayList<>();
+    if (response.error.trim().isEmpty()) {
+      if (response.hosts == null) {
+        LOG.error("Get no offers from the HttpOfferSet endpoint.");
+        throw new IOException();
+      } else {
+        for (String host : response.hosts) {
+          HostOffer offer = offerMap.get(host);
+          if (offer == null) {
+            LOG.warn("Cannot find host " + host + " in the response");
+          } else {
+            orderedOffers.add(offer);
+          }
+        }
+        LOG.debug("Sorted offers: " + String.join(",",
+            response.hosts.subList(0, Math.min(5, response.hosts.size())) + "..."));
+      }
+      if (orderedOffers.isEmpty()) {
+        LOG.warn("Cannot find any offers for this task. "
+                + "Please check the condition of these hosts: "
+                + HttpOfferSetUtil.getHostnames(offers));
+      }
+      return orderedOffers;
+    } else {
+      LOG.error("Unable to get sorted offers due to " + response.error);
+      throw new IOException(response.error);
+    }
   }
 
   // Host represents for each host offer.
@@ -255,17 +296,20 @@ public class HttpOfferSetImpl implements OfferSet {
 
   // ScheduleRequest is the request sent to MagicMatch.
   static class ScheduleRequest {
+    String jobKey;
     Resource request;
     List<Host> hosts;
 
-    ScheduleRequest(Resource request, List<Host> hosts) {
+    ScheduleRequest(Resource request, List<Host> hosts, String jobKey) {
       this.request = request;
       this.hosts = hosts;
+      this.jobKey = jobKey;
     }
 
     @Override
     public String toString() {
-      return "ScheduleRequest{" + "request=" + request + ", hosts=" + hosts + '}';
+      return "ScheduleRequest{" + "jobKey=" + jobKey + "request=" + request
+                + ", hosts=" + hosts + '}';
     }
   }
 
@@ -276,8 +320,7 @@ public class HttpOfferSetImpl implements OfferSet {
 
     @Override
     public String toString() {
-      return "ScheduleResponse{" + "error='" + error + '\'' + ", hosts="
-          + hosts + '}';
+      return "ScheduleResponse{" + "error='" + error + '\'' + ", hosts=" + hosts + '}';
     }
   }
 }
