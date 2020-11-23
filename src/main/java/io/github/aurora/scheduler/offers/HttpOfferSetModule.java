@@ -57,6 +57,7 @@ public class HttpOfferSetModule extends AbstractModule {
   private static final Logger LOG = LoggerFactory.getLogger(HttpOfferSetModule.class);
   static List<Long> latencyMsList = Collections.synchronizedList(new LinkedList<>());
   private static long failureCount = 0;
+  private static boolean enabled = false;
 
   public static synchronized void incFailureCount() {
     HttpOfferSetModule.failureCount++;
@@ -70,13 +71,24 @@ public class HttpOfferSetModule extends AbstractModule {
     HttpOfferSetModule.failureCount = 0;
   }
 
+  public static synchronized void enable(boolean mEnabled) {
+    HttpOfferSetModule.enabled = mEnabled;
+  }
+
+  public static synchronized boolean isEnabled() {
+    return HttpOfferSetModule.enabled;
+  }
+
   @Parameters(separators = "=")
   public static class Options {
     @Parameter(names = "-http_offer_set_endpoint")
-    String httpOfferSetEndpoint = "http://localhost:9092/v1/offerset";
+    String httpOfferSetEndpoint = "http://localhost:9090/v1/offerset";
 
     @Parameter(names = "-http_offer_set_timeout_ms")
     int httpOfferSetTimeoutMs = 100;
+
+    @Parameter(names = "-http_offer_set_max_retries")
+    int httpOfferSetMaxRetries = 10;
   }
 
   static {
@@ -103,6 +115,9 @@ public class HttpOfferSetModule extends AbstractModule {
         bind(String.class)
                 .annotatedWith(HttpOfferSetImpl.Endpoint.class)
                 .toInstance(options.httpOfferSetEndpoint);
+        bind(Integer.class)
+                .annotatedWith(HttpOfferSetImpl.MaxRetries.class)
+                .toInstance(options.httpOfferSetMaxRetries);
         bind(OfferSet.class).to(HttpOfferSetImpl.class).in(Singleton.class);
         expose(OfferSet.class);
       }

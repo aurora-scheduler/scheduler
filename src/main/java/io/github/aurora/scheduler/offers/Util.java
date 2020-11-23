@@ -15,19 +15,18 @@ package io.github.aurora.scheduler.offers;
 
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Set;
 
 import com.google.common.math.Quantiles;
 
 import org.apache.aurora.scheduler.offers.HostOffer;
 
-final class HttpOfferSetUtil {
+public final class Util {
 
-  private HttpOfferSetUtil() {
+  private Util() {
     // Utility class.
   }
 
-  static Number percentile(List<Long> list, double percentile) {
+  public static Number percentile(List<Long> list, double percentile) {
     if (list.isEmpty()) {
       return 0.0;
     }
@@ -45,7 +44,7 @@ final class HttpOfferSetUtil {
             .compute(list);
   }
 
-  static long max(List<Long> list) {
+  public static long max(List<Long> list) {
     long max = 0;
     for (long e : list) {
       if (e > max) {
@@ -55,7 +54,7 @@ final class HttpOfferSetUtil {
     return max;
   }
 
-  static long avg(List<Long> list) {
+  public static long avg(List<Long> list) {
     if (list.isEmpty()) {
       return 0;
     }
@@ -67,7 +66,7 @@ final class HttpOfferSetUtil {
     return avg / list.size();
   }
 
-  static List<String> getHostnames(Set<HostOffer> offers) {
+  public static List<String> getHostnames(Iterable<HostOffer> offers) {
     List<String> hostnames = new LinkedList<>();
     for (HostOffer offer: offers) {
       hostnames.add(offer.getOffer().getHostname());

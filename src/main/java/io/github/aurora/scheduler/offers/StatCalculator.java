@@ -66,12 +66,13 @@ public class StatCalculator implements Runnable {
   @Override
   public void run() {
     float medianLatency =
-            HttpOfferSetUtil.percentile(HttpOfferSetModule.latencyMsList, 50.0)
+            Util.percentile(HttpOfferSetModule.latencyMsList, 50.0)
                               .floatValue() / 1000000;
     float avgLatency =
-            (float) HttpOfferSetUtil.avg(HttpOfferSetModule.latencyMsList) / 1000000;
+            (float) Util.avg(HttpOfferSetModule.latencyMsList) / 1000000;
     float worstLatency =
-            (float) HttpOfferSetUtil.max(HttpOfferSetModule.latencyMsList) / 1000000;
+            (float) Util.max(HttpOfferSetModule.latencyMsList) / 1000000;
+
     String medianLatencyName = "http_offer_set_median_latency_ms";
     metricCache.getUnchecked(medianLatencyName).set(medianLatencyName, medianLatency);
     String worstLatencyName = "http_offer_set_worst_latency_ms";
@@ -81,8 +82,9 @@ public class StatCalculator implements Runnable {
     String failureCountName = "http_offer_set_failure_count";
     metricCache.getUnchecked(failureCountName).set(failureCountName,
             HttpOfferSetModule.getFailureCount());
+
     // reset the stats.
-//    HttpOfferSetModule.latencyMsList.clear();
-//    HttpOfferSetModule.resetFailureCount();
+    HttpOfferSetModule.latencyMsList.clear();
+    HttpOfferSetModule.resetFailureCount();
   }
 }

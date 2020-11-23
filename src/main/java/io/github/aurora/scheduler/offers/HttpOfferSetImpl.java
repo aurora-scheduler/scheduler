@@ -59,7 +59,7 @@ public class HttpOfferSetImpl implements OfferSet {
   private final Gson gson;
   private Integer timeoutMs;
   private URL endpoint;
-  private boolean enabled;
+  private Integer maxRetries;
 
   public HttpOfferSetImpl() {
     offers = new HashSet<>();
@@ -74,29 +74,36 @@ public class HttpOfferSetImpl implements OfferSet {
   @VisibleForTesting
   @Qualifier
   @Target({ FIELD, PARAMETER, METHOD }) @Retention(RUNTIME)
+  @interface MaxRetries { }
+
+  @VisibleForTesting
+  @Qualifier
+  @Target({ FIELD, PARAMETER, METHOD }) @Retention(RUNTIME)
   @interface TimeoutMs { }
 
   @Inject
   public HttpOfferSetImpl(Ordering<HostOffer> ordering,
                           @TimeoutMs Integer timeoutMs,
-                          @Endpoint String url) {
+                          @Endpoint String url,
+                          @MaxRetries Integer maxRetries) {
     offers = new ConcurrentSkipListSet<>(ordering);
     gson = new Gson();
-    enabled = true;
     try {
       endpoint = new URL(url);
     } catch (MalformedURLException e) {
       LOG.error("http_offer_set_endpoint is malformed. ", e);
-      enabled = false;
+      HttpOfferSetModule.enable(false);
     }
-    if (enabled) {
+    if (HttpOfferSetModule.isEnabled()) {
       LOG.info("HttpOfferSetModule Enabled.");
     } else {
       LOG.info("HttpOfferSetModule Disabled.");
     }
     this.timeoutMs = timeoutMs;
+    this.maxRetries = maxRetries;
     LOG.info("HttpOfferSet's endpoint: " + this.endpoint);
     LOG.info("HttpOfferSet's timeout: " + this.timeoutMs + " (ms)");
+    LOG.info("HttpOfferSet's max retries: " + this.maxRetries);
   }
 
   @Override
@@ -130,7 +137,7 @@ public class HttpOfferSetImpl implements OfferSet {
   @Override
   public Iterable<HostOffer> getOrdered(TaskGroupKey groupKey, ResourceRequest resourceRequest) {
     // if there are no available offers, do nothing.
-    if (offers.isEmpty() || !this.enabled) {
+    if (offers.isEmpty() || !HttpOfferSetModule.isEnabled()) {
       return offers;
     }
 
@@ -149,10 +156,17 @@ public class HttpOfferSetImpl implements OfferSet {
           + resourceRequest.getTask().getJob().toString()
           + " using HttpOfferSet. ", e);
       HttpOfferSetModule.incFailureCount();
+    } finally {
+      // shutdown HttpOfferSet if failure is consistent.
+      if (HttpOfferSetModule.getFailureCount() >= maxRetries) {
+        LOG.error("Reaches " + maxRetries + ". HttpOfferSet Disabled.");
+        HttpOfferSetModule.enable(false);
+      }
     }
     if (orderedOffers != null) {
       return orderedOffers;
     }
+
     // fall back to default scheduler.
     LOG.warn("Falling back on default ordering.");
     return offers;
@@ -256,7 +270,7 @@ public class HttpOfferSetImpl implements OfferSet {
       if (orderedOffers.isEmpty()) {
         LOG.warn("Cannot find any offers for this task. "
                 + "Please check the condition of these hosts: "
-                + HttpOfferSetUtil.getHostnames(offers));
+                + Util.getHostnames(offers));
       }
       return orderedOffers;
     } else {
