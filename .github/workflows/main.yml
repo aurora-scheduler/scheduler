@@ -29,6 +29,6 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-gradle-
     - name: Install Kerberos lib
-      run: sudo apt-get update && sudo install -y libkrb5-dev
+      run: sudo apt-get update && sudo install libkrb5-dev
     - name: Build components
       run: TERM=dumb ./gradlew --no-daemon -Pq clean build
