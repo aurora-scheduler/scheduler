@@ -92,7 +92,7 @@ For more details, please see https://issues.apache.org/jira/browse/AURORA-1169
   ext.nettyRev = '4.0.52.Final'
   ext.protobufRev = '3.5.1'
   ext.resteasyRev = '3.1.4.Final'
-  ext.servletRev = '3.1.0'
+  ext.servletRev = '4.0.1'
   ext.slf4jRev = '1.7.30'
   ext.stringTemplateRev = '3.2.1'
   ext.thriftRev = '0.10.0'
