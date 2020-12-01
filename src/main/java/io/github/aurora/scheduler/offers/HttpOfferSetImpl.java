@@ -90,13 +90,11 @@ public class HttpOfferSetImpl implements OfferSet {
     gson = new Gson();
     try {
       endpoint = new URL(url);
+      HttpOfferSetModule.enable(true);
+      LOG.info("HttpOfferSetModule Enabled.");
     } catch (MalformedURLException e) {
       LOG.error("http_offer_set_endpoint is malformed. ", e);
       HttpOfferSetModule.enable(false);
-    }
-    if (HttpOfferSetModule.isEnabled()) {
-      LOG.info("HttpOfferSetModule Enabled.");
-    } else {
       LOG.info("HttpOfferSetModule Disabled.");
     }
     this.timeoutMs = timeoutMs;
