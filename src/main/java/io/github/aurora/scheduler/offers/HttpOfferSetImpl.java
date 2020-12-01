@@ -180,15 +180,13 @@ public class HttpOfferSetImpl implements OfferSet {
         resourceRequest.getResourceBag().valueOf(ResourceType.DISK_MB));
     List<Host> hosts = new LinkedList<>();
     for (HostOffer offer : offers) {
-      Host host = new Host();
-      host.name = offer.getAttributes().getHost();
       double cpu = offer.getResourceBag(true).valueOf(ResourceType.CPUS)
           + offer.getResourceBag(false).valueOf(ResourceType.CPUS);
       double memory = offer.getResourceBag(true).valueOf(ResourceType.RAM_MB)
           + offer.getResourceBag(false).valueOf(ResourceType.RAM_MB);
       double disk = offer.getResourceBag(true).valueOf(ResourceType.DISK_MB)
           + offer.getResourceBag(false).valueOf(ResourceType.DISK_MB);
-      host.offer = new Resource(cpu, memory, disk);
+      Host host = new Host(offer.getAttributes().getHost(), new Resource(cpu, memory, disk));
       hosts.add(host);
     }
     IJobKey jobKey = resourceRequest.getTask().getJob();
@@ -246,28 +244,27 @@ public class HttpOfferSetImpl implements OfferSet {
   List<HostOffer> processResponse(String responseStr) throws IOException {
     // process the response
     ScheduleResponse response = gson.fromJson(responseStr, ScheduleResponse.class);
-    LOG.debug("Response: " + responseStr);
+    if (response.error == null || response.hosts == null) {
+      LOG.info("Response: " + responseStr);
+      throw new IOException("response is malformed");
+    }
+
     Map<String, HostOffer> offerMap = new HashMap<>();
     for (HostOffer offer : offers) {
       offerMap.put(offer.getAttributes().getHost(), offer);
     }
     List<HostOffer> orderedOffers = new ArrayList<>();
     if (response.error.trim().isEmpty()) {
-      if (response.hosts == null) {
-        LOG.error("Get no offers from the HttpOfferSet endpoint.");
-        throw new IOException();
-      } else {
-        for (String host : response.hosts) {
-          HostOffer offer = offerMap.get(host);
-          if (offer == null) {
-            LOG.warn("Cannot find host " + host + " in the response");
-          } else {
-            orderedOffers.add(offer);
-          }
+      for (String host : response.hosts) {
+        HostOffer offer = offerMap.get(host);
+        if (offer == null) {
+          LOG.warn("Cannot find host " + host + " in the response");
+        } else {
+          orderedOffers.add(offer);
         }
-        LOG.debug("Sorted offers: " + String.join(",",
-            response.hosts.subList(0, Math.min(5, response.hosts.size())) + "..."));
       }
+      LOG.debug("Sorted offers: " + String.join(",",
+          response.hosts.subList(0, Math.min(5, response.hosts.size())) + "..."));
       if (orderedOffers.isEmpty()) {
         LOG.warn("Cannot find any offers for this task. "
                 + "Please check the condition of these hosts: "
@@ -284,6 +281,11 @@ public class HttpOfferSetImpl implements OfferSet {
   static class Host {
     String name;
     Resource offer;
+
+    Host(String mName, Resource mOffer) {
+      name = mName;
+      offer = mOffer;
+    }
 
     @Override
     public String toString() {
