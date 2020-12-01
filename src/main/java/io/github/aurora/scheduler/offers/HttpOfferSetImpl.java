@@ -50,6 +50,9 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 /**
  * Implementation for OfferSet.
+ * HttpOfferSetImpl sorts offers using an external endpoint.
+ * It sends the request (request + offers) to the external endpoint
+ * and receives the response (sorted offers).
  */
 @VisibleForTesting
 public class HttpOfferSetImpl implements OfferSet {
