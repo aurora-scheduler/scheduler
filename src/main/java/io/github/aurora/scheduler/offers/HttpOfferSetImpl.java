@@ -25,6 +25,7 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.stream.Collectors;
 
 import javax.inject.Qualifier;
 
@@ -178,17 +179,14 @@ public class HttpOfferSetImpl implements OfferSet {
     Resource req = new Resource(resourceRequest.getResourceBag().valueOf(ResourceType.CPUS),
         resourceRequest.getResourceBag().valueOf(ResourceType.RAM_MB),
         resourceRequest.getResourceBag().valueOf(ResourceType.DISK_MB));
-    List<Host> hosts = new LinkedList<>();
-    for (HostOffer offer : offers) {
-      double cpu = offer.getResourceBag(true).valueOf(ResourceType.CPUS)
-          + offer.getResourceBag(false).valueOf(ResourceType.CPUS);
-      double memory = offer.getResourceBag(true).valueOf(ResourceType.RAM_MB)
-          + offer.getResourceBag(false).valueOf(ResourceType.RAM_MB);
-      double disk = offer.getResourceBag(true).valueOf(ResourceType.DISK_MB)
-          + offer.getResourceBag(false).valueOf(ResourceType.DISK_MB);
-      Host host = new Host(offer.getAttributes().getHost(), new Resource(cpu, memory, disk));
-      hosts.add(host);
-    }
+    List<Host> hosts = offers.stream().map(offer -> new Host(offer.getAttributes().getHost(),
+            new Resource(offer.getResourceBag(true).valueOf(ResourceType.CPUS)
+                    + offer.getResourceBag(false).valueOf(ResourceType.CPUS),
+                    offer.getResourceBag(true).valueOf(ResourceType.RAM_MB)
+                            + offer.getResourceBag(false).valueOf(ResourceType.RAM_MB),
+                    offer.getResourceBag(true).valueOf(ResourceType.DISK_MB)
+                    + offer.getResourceBag(false).valueOf(ResourceType.DISK_MB))))
+            .collect(Collectors.toList());
     IJobKey jobKey = resourceRequest.getTask().getJob();
     String jobKeyStr = jobKey.getRole() + "-" + jobKey.getEnvironment() + "-" + jobKey.getName()
             + "@" + startTime;
@@ -249,10 +247,8 @@ public class HttpOfferSetImpl implements OfferSet {
       throw new IOException("response is malformed");
     }
 
-    Map<String, HostOffer> offerMap = new HashMap<>();
-    for (HostOffer offer : offers) {
-      offerMap.put(offer.getAttributes().getHost(), offer);
-    }
+    Map<String, HostOffer> offerMap = offers.stream()
+            .collect(Collectors.toMap(offer -> offer.getAttributes().getHost(), offer -> offer));
     List<HostOffer> orderedOffers = new ArrayList<>();
     if (response.error.trim().isEmpty()) {
       for (String host : response.hosts) {
