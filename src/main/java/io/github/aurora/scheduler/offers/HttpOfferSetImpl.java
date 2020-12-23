@@ -14,15 +14,10 @@
 package io.github.aurora.scheduler.offers;
 
 import java.io.IOException;
-import java.io.OutputStream;
-import java.io.UnsupportedEncodingException;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
-import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
-import java.net.ProtocolException;
 import java.net.URL;
-import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.stream.Collectors;
@@ -40,7 +35,14 @@ import org.apache.aurora.scheduler.offers.HostOffer;
 import org.apache.aurora.scheduler.offers.OfferSet;
 import org.apache.aurora.scheduler.resources.ResourceType;
 import org.apache.aurora.scheduler.storage.entities.IJobKey;
-import org.apache.commons.io.IOUtils;
+import org.apache.http.HttpEntity;
+import org.apache.http.client.config.RequestConfig;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.util.EntityUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -196,47 +198,34 @@ public class HttpOfferSetImpl implements OfferSet {
   // sendRequest sends resorceRequest to the external plugin endpoint and gets json response.
   private String sendRequest(ScheduleRequest scheduleRequest) throws IOException {
     LOG.debug("Sending request for " + scheduleRequest.toString());
-    // create connection
-    HttpURLConnection con;
+    CloseableHttpClient httpClient = HttpClients.createDefault();
     try {
-      con = (HttpURLConnection) this.endpoint.openConnection();
-      con.setConnectTimeout(this.timeoutMs);
-      con.setReadTimeout(this.timeoutMs);
-      con.setRequestMethod("POST");
-      con.setRequestProperty("Content-Type", "application/json; utf-8");
-      con.setRequestProperty("Accept", "application/json");
-      con.setDoOutput(true);
-    } catch (ProtocolException pe) {
-      LOG.error("The HTTP protocol was not setup correctly.");
-      throw pe;
-    } catch (IOException ioe) {
-      LOG.error("Unable to open HTTP connection.");
-      throw ioe;
+      HttpPost request = new HttpPost(this.endpoint.toString());
+      RequestConfig requestConfig = RequestConfig.custom()
+              .setConnectionRequestTimeout(this.timeoutMs)
+              .setConnectTimeout(this.timeoutMs)
+              .setSocketTimeout(this.timeoutMs)
+              .build();
+      request.setConfig(requestConfig);
+      request.addHeader("Content-Type", "application/json; utf-8");
+      request.addHeader("Accept", "application/json");
+      request.setEntity(new StringEntity(gson.toJson(scheduleRequest)));
+      CloseableHttpResponse response = httpClient.execute(request);
+      try {
+        HttpEntity entity = response.getEntity();
+        if (entity == null) {
+          throw new IOException("Empty response from the external http endpoint.");
+        } else {
+          String responseStr = EntityUtils.toString(entity);
+          LOG.info("response: " + responseStr);
+          return responseStr;
+        }
+      } finally {
+        response.close();
+      }
+    } finally {
+      httpClient.close();
     }
-    String jsonStr = gson.toJson(scheduleRequest);
-    LOG.debug("request to plugin: " + jsonStr);
-    try (OutputStream os = con.getOutputStream()) {
-      byte[] input = jsonStr.getBytes(StandardCharsets.UTF_8);
-      os.write(input, 0, input.length);
-    } catch (IOException ioe) {
-      LOG.error("Unable to send scheduleRequest to http endpoint "
-              + this.endpoint, ioe);
-      throw ioe;
-    }
-
-    // read response
-    StringBuilder response = new StringBuilder();
-    try {
-      String responseLine = IOUtils.toString(con.getInputStream(), StandardCharsets.UTF_8);
-      response.append(responseLine.trim());
-    } catch (UnsupportedEncodingException uee) {
-      LOG.error("Response is not valid.", uee);
-      throw uee;
-    } catch (IOException ioe) {
-      LOG.error("Unable to read the response from the http-plugin.", ioe);
-      throw ioe;
-    }
-    return response.toString();
   }
 
   List<HostOffer> processResponse(String responseStr) throws IOException {
