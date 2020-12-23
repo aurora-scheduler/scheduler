@@ -216,9 +216,7 @@ public class HttpOfferSetImpl implements OfferSet {
         if (entity == null) {
           throw new IOException("Empty response from the external http endpoint.");
         } else {
-          String responseStr = EntityUtils.toString(entity);
-          LOG.info("response: " + responseStr);
-          return responseStr;
+          return EntityUtils.toString(entity);
         }
       } finally {
         response.close();
