@@ -167,7 +167,7 @@ public class HttpOfferSetModule extends AbstractModule {
 
     @Override
     protected void shutDown() {
-      // Ignored. VM shutdown is required to stop computing.
+      // Ignored.
     }
   }
 }
