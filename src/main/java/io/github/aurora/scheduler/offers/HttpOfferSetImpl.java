@@ -68,7 +68,7 @@ public class HttpOfferSetImpl implements OfferSet {
   private Integer maxRetries;
 
   public HttpOfferSetImpl() {
-    offers = new HashSet<>();
+    offers = new ConcurrentSkipListSet<>();
     gson = new Gson();
   }
 
@@ -150,7 +150,7 @@ public class HttpOfferSetImpl implements OfferSet {
       long startTime = System.nanoTime();
       // create json request & send the Rest API request to the scheduler plugin
       ScheduleRequest scheduleRequest = this.createRequest(resourceRequest, startTime);
-      LOG.info("Sending request " + scheduleRequest.jobKey);
+      LOG.debug("Sending request " + scheduleRequest.jobKey);
       String responseStr = this.sendRequest(scheduleRequest);
       orderedOffers = processResponse(responseStr);
       LOG.info("received response for " + scheduleRequest.jobKey);
@@ -163,7 +163,7 @@ public class HttpOfferSetImpl implements OfferSet {
     } finally {
       // shutdown HttpOfferSet if failure is consistent.
       if (HttpOfferSetModule.getFailureCount() >= maxRetries) {
-        LOG.error("Reaches " + maxRetries + ". HttpOfferSet Disabled.");
+        LOG.error("Reaches " + maxRetries + ". HttpOfferSetModule Disabled.");
         HttpOfferSetModule.enable(false);
       }
     }
@@ -230,7 +230,7 @@ public class HttpOfferSetImpl implements OfferSet {
     // process the response
     ScheduleResponse response = gson.fromJson(responseStr, ScheduleResponse.class);
     if (response.error == null || response.hosts == null) {
-      LOG.info("Response: " + responseStr);
+      LOG.error("Response: " + responseStr);
       throw new IOException("response is malformed");
     }
 
