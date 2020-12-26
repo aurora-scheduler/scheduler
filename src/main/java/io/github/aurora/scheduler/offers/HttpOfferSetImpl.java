@@ -62,14 +62,13 @@ public class HttpOfferSetImpl implements OfferSet {
 
   private static final Logger LOG = LoggerFactory.getLogger(HttpOfferSetImpl.class);
   private final Set<HostOffer> offers;
-  private final Gson gson;
+  private final Gson gson = new Gson();
   private Integer timeoutMs;
   private URL endpoint;
   private Integer maxRetries;
 
-  public HttpOfferSetImpl() {
-    offers = new ConcurrentSkipListSet<>();
-    gson = new Gson();
+  public HttpOfferSetImpl(Set<HostOffer> offers) {
+    this.offers = offers;
   }
 
   @VisibleForTesting
@@ -93,7 +92,6 @@ public class HttpOfferSetImpl implements OfferSet {
                           @Endpoint String url,
                           @MaxRetries Integer maxRetries) {
     offers = new ConcurrentSkipListSet<>(ordering);
-    gson = new Gson();
     try {
       endpoint = new URL(url);
       HttpOfferSetModule.enable(true);
