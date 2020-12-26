@@ -14,6 +14,7 @@
 package io.github.aurora.scheduler.offers;
 
 import java.io.IOException;
+import java.util.HashSet;
 import java.util.List;
 
 import org.apache.aurora.common.testing.easymock.EasyMockTest;
@@ -52,7 +53,7 @@ public class HttpOfferSetImplTest extends EasyMockTest {
 
   @Before
   public void setUp() throws IOException {
-    httpOfferSet = new HttpOfferSetImpl();
+    httpOfferSet = new HttpOfferSetImpl(new HashSet<>());
     httpOfferSet.add(OFFER_A);
     httpOfferSet.add(OFFER_B);
     httpOfferSet.add(OFFER_C);
