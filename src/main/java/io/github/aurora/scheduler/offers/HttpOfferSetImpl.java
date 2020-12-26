@@ -153,7 +153,7 @@ public class HttpOfferSetImpl implements OfferSet {
       LOG.debug("Sending request " + scheduleRequest.jobKey);
       String responseStr = this.sendRequest(scheduleRequest);
       orderedOffers = processResponse(responseStr);
-      LOG.info("received response for " + scheduleRequest.jobKey);
+      LOG.debug("received response for " + scheduleRequest.jobKey);
       HttpOfferSetModule.latencyMsList.add(System.nanoTime() - startTime);
     } catch (IOException e) {
       LOG.error("Failed to schedule the task of "
