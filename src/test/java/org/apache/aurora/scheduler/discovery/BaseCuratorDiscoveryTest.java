@@ -24,7 +24,8 @@ import org.apache.aurora.scheduler.app.ServiceGroupMonitor;
 import org.apache.aurora.scheduler.discovery.ServiceInstance.Endpoint;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
-import org.apache.curator.framework.recipes.cache.PathChildrenCache;
+import org.apache.curator.framework.recipes.cache.CuratorCache;
+import org.apache.curator.framework.recipes.cache.CuratorCacheListener;
 import org.apache.curator.framework.recipes.cache.PathChildrenCacheEvent;
 import org.junit.Before;
 
@@ -41,19 +42,17 @@ class BaseCuratorDiscoveryTest extends BaseZooKeeperTest {
   @Before
   public void setUpCurator() {
     client = startNewClient();
-
-    PathChildrenCache groupCache =
-        new PathChildrenCache(client, GROUP_PATH, true /* cacheData */);
+    CuratorCache groupCache = CuratorCache.builder(client, GROUP_PATH).build();
     groupEvents = new LinkedBlockingQueue<>();
-    groupCache.getListenable().addListener((c, event) -> groupEvents.put(event));
-
+    CuratorCacheListener listener = CuratorCacheListener.builder()
+            .forPathChildrenCache(GROUP_PATH, client, (c, event) -> groupEvents.put(event)).build();
+    groupCache.listenable().addListener(listener);
     Predicate<String> memberSelector = name -> name.contains(MEMBER_TOKEN);
     groupMonitor = new CuratorServiceGroupMonitor(groupCache, memberSelector);
   }
 
   final CuratorFramework startNewClient() {
     CuratorFramework curator = CuratorFrameworkFactory.builder()
-        .dontUseContainerParents() // Container nodes are only available in ZK 3.5+.
         .retryPolicy((retryCount, elapsedTimeMs, sleeper) -> false) // Don't retry.
         .connectString(String.format("localhost:%d", getServer().getPort()))
         .build();

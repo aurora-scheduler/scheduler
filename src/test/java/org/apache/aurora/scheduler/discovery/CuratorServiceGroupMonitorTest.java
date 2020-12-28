@@ -116,8 +116,8 @@ public class CuratorServiceGroupMonitorTest extends BaseCuratorDiscoveryTest {
 
     // Not started yet, should see no group members.
     assertEquals(ImmutableSet.of(), getGroupMonitor().get());
-
     startGroupMonitor();
+    Thread.sleep(1000); // Sleep to populate initial cache
     assertEquals(ImmutableSet.of(one, two), getGroupMonitor().get());
   }
 
