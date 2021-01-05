@@ -31,6 +31,7 @@ Description of important Aurora features.
  * [SLA Metrics](features/sla-metrics.md)
  * [SLA Requirements](features/sla-requirements.md)
  * [Webhooks](features/webhooks.md)
+ * [Custom Plugins](features/custom-plugins.md)
 
 ## Operators
 For those that wish to manage and fine-tune an Aurora cluster.
