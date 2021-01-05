@@ -12,12 +12,12 @@
  * limitations under the License.
  */
 plugins {
-  id 'com.eriwen.gradle.js' version '1.12.1'
-  id 'com.github.ben-manes.versions' version '0.11.3'
-  id 'com.github.hierynomus.license' version '0.11.0'
+  id 'com.eriwen.gradle.js' version '2.14.1'
+  id 'com.github.ben-manes.versions' version '0.36.0'
+  id 'com.github.hierynomus.license' version '0.15.0'
   id "com.github.node-gradle.node" version "2.2.4"
-  id 'me.champeau.gradle.jmh' version '0.4.8'
-  id "com.github.spotbugs" version "4.2.0"
+  id 'me.champeau.gradle.jmh' version '0.5.2'
+  id "com.github.spotbugs" version "4.6.0"
 }
 
 apply plugin: 'application'
@@ -77,15 +77,15 @@ For more details, please see https://issues.apache.org/jira/browse/AURORA-1169
     }
   }
 
-  ext.commonsLangRev = '3.10'
+  ext.commonsLangRev = '3.11'
   ext.curatorRev = '4.3.0'
   ext.gsonRev = '2.3.1'
   ext.guavaRev = '29.0-jre'
   ext.guiceRev = '4.2.3'
-  ext.httpclientRev = '4.5.2'
-  ext.httpcoreRev = '4.4.4'
+  ext.httpclientRev = '4.5.13'
+  ext.httpcoreRev = '4.4.13'
   ext.asyncHttpclientRev = '2.0.37'
-  ext.jacksonRev = '2.5.1'
+  ext.jacksonRev = '2.12.0'
   ext.jaxRsRev = '2.0'
   ext.junitRev = '4.12'
   ext.logbackRev = '1.2.3'
@@ -93,7 +93,7 @@ For more details, please see https://issues.apache.org/jira/browse/AURORA-1169
   ext.protobufRev = '3.5.1'
   ext.resteasyRev = '3.1.4.Final'
   ext.servletRev = '3.1.0'
-  ext.slf4jRev = '1.7.25'
+  ext.slf4jRev = '1.7.30'
   ext.stringTemplateRev = '3.2.1'
   ext.thriftRev = '0.10.0'
   ext.zookeeperRev = '3.4.8'
@@ -123,7 +123,7 @@ For more details, please see https://issues.apache.org/jira/browse/AURORA-1169
       force "junit:junit:${junitRev}"
       force "org.apache.thrift:libthrift:${thriftRev}"
       force "org.apache.zookeeper:zookeeper:${zookeeperRev}"
-      force "org.hamcrest:hamcrest-core:1.3"
+      force "org.hamcrest:hamcrest-core:2.2"
       force 'org.objenesis:objenesis:2.2'
       force "org.slf4j:slf4j-api:${slf4jRev}"
     }
@@ -400,7 +400,7 @@ dependencies {
   compile "org.eclipse.jetty:jetty-server:${jettyDep}"
   compile "org.eclipse.jetty:jetty-servlet:${jettyDep}"
   compile "org.eclipse.jetty:jetty-servlets:${jettyDep}"
-  compile 'org.quartz-scheduler:quartz:2.3.1'
+  compile 'org.quartz-scheduler:quartz:2.3.2'
 
   testCompile 'com.sun.jersey:jersey-client:1.19'
   testCompile "junit:junit:${junitRev}"
