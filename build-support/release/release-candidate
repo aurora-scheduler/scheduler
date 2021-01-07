@@ -243,7 +243,7 @@ pushd ${dist_dir}
   shasum -a 512 ${dist_name}.tar.gz > ${dist_name}.tar.gz.sha512
 popd
 
-# Publish release candidate to svn and commit and push the new git tag
+# Publish release candidate. Create a new commit and push the new git tag.
 if [[ $publish == 1 ]]; then
   echo "Creating tag ${rc_version_tag}"
   git tag -s ${rc_version_tag} \

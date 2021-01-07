@@ -9,8 +9,8 @@ Releases are signed with keys that can be found in the KEYS file.
 If a developer already has a GPG key, they may manually add it to the
 KEYS file and submit a pull request.
 
-Developers who do not yet have a GPG key, or wish to create a new one,
-can do the following:
+Developers who do not yet have a GPG key or wish to create a new one
+can :
 
 1. Fork project on Github.
 
@@ -20,7 +20,7 @@ can do the following:
 
 3. Add your gpg key to the Aurora KEYS file:
 
-               git checkout -b addingKey
+               git checkout -b addGPGKey
                (gpg --list-sigs <KEY ID> && gpg --armor --export <KEY ID>) >> KEYS
                git add KEYS && git commit -m "Adding gpg key for <GITHUB ID>"
 
@@ -40,9 +40,10 @@ Creating a release
 The following will guide you through the steps to create a release candidate and an
 official Aurora Scheduler release. Before starting your gpg key should be in the KEYS file.
 
-1. Ensure that all merged pull requests for this release candidate are tagged with the correct version, the changelog script will use this to generate the CHANGELOG in step #2.
+1. Ensure that all merged pull requests for this release candidate are tagged with the correct version,
+the changelog script will use this to generate the CHANGELOG in step #2.
+Merged pull requests can be found [here](https://github.com/aurora-scheduler/aurora/pulls?q=is%3Apr+is%3Amerged+).
 
-Merged pull requests can be found [here]https://github.com/aurora-scheduler/aurora/pulls?q=is%3Apr+is%3Amerged+)
 
 2. Prepare RELEASE-NOTES.md for the release. This just boils down to removing the "(Not yet
 released)" suffix from the impending release.
