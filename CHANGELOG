@@ -1,3 +1,16 @@
+Aurora Scheduler 0.24.0
+--------------------------------------------------------------------------------
+## Pull Requests
+  * #130 - Custom plugins documentation
+  * #125 - Bump quartz from 2.3.1 to 2.3.2
+  * #120 - Bump jacksonRev from 2.5.1 to 2.12.0
+  * #117 - Bump slf4j-api from 1.7.25 to 1.7.30
+  * #116 - Bump com.github.hierynomus.license from 0.11.0 to 0.15.0
+  * #114 - Bump com.github.spotbugs from 4.2.0 to 4.6.0
+  * #113 - Bump eslint-plugin-standard from 4.1.0 to 5.0.0 in /ui
+  * #108 - Bump com.github.ben-manes.versions from 0.33.0 to 0.36.0
+  * #107 - Bump hamcrest-core from 1.3 to 2.2
+  * #105 - Bump diff from 4.0.2 to 5.0.0 in /ui
 Aurora Scheduler 0.23.0
 --------------------------------------------------------------------------------
 ## Issues
