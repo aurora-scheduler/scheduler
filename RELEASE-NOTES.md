@@ -1,10 +1,13 @@
-0.24.0 (unreleased)
+0.24.0
 ======
 
 ### New/updated:
 - Updated to Mesos dependency to 1.8.1.
 - Pants version bumped up to 1.23.0.
 - Minimum Vagrant version bumped up to 2.2.9.
+- Added optional OfferSet HTTP Plugin that may be used to utilize an external process to sort
+  Mesos offers.
+- Several project dependencies have been upgraded. See CHANGELOG for more information.
 
 0.23.0
 ======
