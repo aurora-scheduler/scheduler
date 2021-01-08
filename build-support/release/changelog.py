@@ -31,25 +31,29 @@ prs = []
 
 data = json.load(sys.stdin)
 
-for issue in data:
-    if ("milestone" in issue and
-            issue["milestone"] is not None and
-            issue["milestone"]["title"] == version):
-        if "pull_request" in issue:
-            prs.append(f'#{issue["number"]} - {issue["title"]}')
-        else:
-            issues.append(f'#{issue["number"]} - {issue["title"]}')
+milestones = data["data"]["repository"]["milestones"]["nodes"]
+milestone = None
+
+for m in milestones:
+    if m["title"] == version:
+        milestone = m
+
+if milestone is None:
+    sys.exit(f'no open milestone found on github matching provied version {version}')
 
 print(f"Aurora Scheduler {version}")
 print("-" * 80)
-if len(issues) > 0:
-    print("## Issues")
-    for issue in issues:
-        print(f"  * {issue}")
+
+if len(milestone["pullRequests"]["nodes"]) > 0:
+    print("## Pull Requests")
+    for pr in milestone["pullRequests"]["nodes"]:
+        print(f'* [#{pr["number"]}]({pr["permalink"]}) - {pr["title"]}')
+
     print("")
 
-if len(prs) > 0:
-    print("## Pull Requests")
-    for pr in prs:
-        print(f"  * {pr}")
+if len(milestone["issues"]["nodes"]) > 0:
+    print("## Issues")
+    for issue in milestone["issues"]["nodes"]:
+        print(f'* [#{issue["number"]}]({issue["url"]}) - {issue["title"]}')
+
     print("")

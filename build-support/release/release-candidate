@@ -31,7 +31,20 @@ export GPG_TTY=${GPG_TTY:-$(tty)}
 rc_number=0
 override_version=''
 aurora_git_web_url='https://github.com/aurora-scheduler/aurora'
-aurora_github_api='repos/aurora-scheduler/aurora/issues'
+graphql_query='
+query MilestoneInfo($name: String!, $owner: String!) {
+  repository(owner: $owner, name: $name) {
+    milestones(first: 100, states:OPEN) {
+      nodes {
+        title
+        number
+        pullRequests(first: 100, states:[MERGED]) { nodes { number title permalink }}
+        issues(first: 100, states: CLOSED) { nodes { number title url }}
+      }
+    }
+  }
+}
+'
 
 function print_help_and_exit {
 cat <<EOF
@@ -181,7 +194,7 @@ fi
 current_git_rev=$(git rev-parse HEAD)
 function print_reset_instructions {
 cat <<EOF
-To roll back your local repo you will need to run:
+To roll back your local repo you will need to run some or all of the following:
 
   git checkout "$starting_git_branch"
   git reset --hard ${current_git_rev}
@@ -206,8 +219,16 @@ fi
 git clean -fdxq
 
 echo "Generating changelog"
-REL_ADD_CHANGELOG=$(gh api -XGET "$aurora_github_api" -f state=closed | python3 ./build-support/release/changelog.py $current_version)
-echo "$REL_ADD_CHANGELOG" | cat - CHANGELOG > temp && mv temp CHANGELOG
+
+# Query Github using GraphQL to get information about milestone
+gh api graphql \
+--paginate \
+--hostname=github.com \
+-F owner='aurora-scheduler' \
+-F name='aurora' \
+-f query="$graphql_query" | python3 ./build-support/release/changelog.py $current_version > CHANGELOG.tmp
+
+cat CHANGELOG >> CHANGELOG.tmp && mv CHANGELOG.tmp CHANGELOG
 
 git add CHANGELOG
 git commit -m "Updating CHANGELOG for ${current_version} release."
