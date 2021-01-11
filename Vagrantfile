@@ -22,7 +22,7 @@ Vagrant.require_version ">= 2.2.9"
 Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   config.vm.hostname = "aurora.local"
   # See build-support/packer/README.md for instructions on updating this box.
-  config.vm.box = "apache-aurora/dev-environment"
+  config.vm.box = "aurora-scheduler/dev-environment"
   config.vm.box_version = "0.0.20"
 
   config.vm.define "devcluster" do |dev|
