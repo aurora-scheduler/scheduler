@@ -1,6 +1,6 @@
 ![Aurora Logo](docs/images/aurora_logo.png)
 
-![Build Status](https://github.com/aurora-scheduler/aurora/workflows/CI/badge.svg?branch=master)
+T![Build Status](https://github.com/aurora-scheduler/aurora/workflows/CI/badge.svg?branch=master)
 
 [Aurora Scheduler](https://aurora-scheduler.github.io/) lets you use an [Apache Mesos](http://mesos.apache.org)
 cluster as a private cloud. It supports running long-running services, cron jobs, and ad-hoc jobs.
@@ -12,18 +12,14 @@ To very concisely describe Aurora, it is like a distributed monit or distributed
 you can instruct to do things like _run 100 of these, somewhere, forever_.
 
 ### What this project is and what it is not
-Aurora Scheduler is a reboot of Apache Aurora that seeks to continue its development after the latter entered the [Apache Attic](https://lists.apache.org/thread.html/reee926fceea75b7cc25110abb9deb3c41921c1585157a7f45c814419%40%3Cdev.aurora.apache.org%3E).
-That having been said, the project is largely in maintenance mode. We will continue to try to provide
-quality of life updates to the codebase but we don't anticipate any new large features being landed.
+Aurora Scheduler is a mainteannce fork of Apache Aurora after the original project
+entered the [Apache Attic](https://lists.apache.org/thread.html/reee926fceea75b7cc25110abb9deb3c41921c1585157a7f45c814419%40%3Cdev.aurora.apache.org%3E).
+The goal of this fork is to continue mainteannce and  quality of life updates to the **scheduler codebase**
+but we don't anticipate any new large features being landed.
 
-Furthermore, as a result of the decreased amount of contributors available, focus will be turned to the scheduler.
-Anyone who depends on tooling outside of the scheduler should look at taking up maintenance of those tools.
+**Please note that this also means the [original Python2 client](https://github.com/aurora-scheduler/client) is unmaintained.**
 
-Changes made to the scheduler will always strive to be compatible with existing tools but compatibility is _not_ guaranteed.
-More importantly, in many cases we will not be testing against such tools so it is
-up to users to report incompatible changes.
-
-**Tools in this case also include the [original Python2 client](https://github.com/aurora-scheduler/client).**
+**Changes made to the scheduler will always strive to be compatible with existing tools but compatibility is _not_ guaranteed.**
 
 ## Features
 
@@ -54,8 +50,8 @@ Aurora is built for users _and_ operators.
     and debug
 
 ### When and when not to use Aurora
-**Diclaimer:** _If you are not already using Aurora, it is strongly suggested you look into other similar projects 
-in this space as the Mesos ecosystem (including our project) is now largely in legacy support mode._
+**Diclaimer:** _If you are not already using Aurora, it is strongly suggested you look into other projects
+in this space as the Mesos ecosystem (including our project) is in maintenance mode._
 
 _We are extremely proud of what has been achieved by this project but the reality is there are other
 projects with a much more active community behind them where users will be able to enjoy better support._
@@ -70,8 +66,7 @@ scheduler itself, you may want to explore developing your own
 
 ## Getting Help
 If you have questions that aren't answered in our [documentation](https://aurora-scheduler.github.io/documentation/latest/),
-you can reach out to the maintainers via Slack: #aurora on [mesos.slack.com](http://mesos.slack.com).
-Invites to our slack channel may be requested via [mesos-slackin.herokuapp.com](https://mesos-slackin.herokuapp.com/)
+you can reach out to the community via Matrix on [#aurora-scheduler](https://matrix.to/#/#aurora-scheduler:matrix.org).
 
 You can also file bugs/issues in our [Github](https://github.com/aurora-scheduler/aurora/issues) repo.
 
