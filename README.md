@@ -1,6 +1,6 @@
 ![Aurora Logo](docs/images/aurora_logo.png)
 
-T![Build Status](https://github.com/aurora-scheduler/aurora/workflows/CI/badge.svg?branch=master)
+![Build Status](https://github.com/aurora-scheduler/aurora/workflows/CI/badge.svg?branch=master)
 
 [Aurora Scheduler](https://aurora-scheduler.github.io/) lets you use an [Apache Mesos](http://mesos.apache.org)
 cluster as a private cloud. It supports running long-running services, cron jobs, and ad-hoc jobs.
@@ -14,7 +14,7 @@ you can instruct to do things like _run 100 of these, somewhere, forever_.
 ### What this project is and what it is not
 Aurora Scheduler is a mainteannce fork of Apache Aurora after the original project
 entered the [Apache Attic](https://lists.apache.org/thread.html/reee926fceea75b7cc25110abb9deb3c41921c1585157a7f45c814419%40%3Cdev.aurora.apache.org%3E).
-The goal of this fork is to continue mainteannce and  quality of life updates to the **scheduler codebase**
+The goal of this fork is to continue maintenance and  quality of life updates to the **scheduler codebase**
 but we don't anticipate any new large features being landed.
 
 **Please note that this also means the [original Python2 client](https://github.com/aurora-scheduler/client) is unmaintained.**
