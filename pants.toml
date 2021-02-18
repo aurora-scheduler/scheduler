@@ -12,13 +12,13 @@
 # limitations under the License.
 
 [GLOBAL]
-pants_version: 1.23.0
+pants_version = "1.26.0"
 
-plugins: [
+plugins = [
     'pantsbuild.pants.contrib.python.checks==%(pants_version)s',
   ]
 
-backend_packages: [
+backend_packages = [
     # Pants built-ins:
     'pants.backend.codegen.thrift.python',
     'pants.backend.graph_info',
@@ -27,41 +27,36 @@ backend_packages: [
   ]
 
 # allow imports in BUILD files to read .auroraversion
-build_file_imports: allow
+build_file_imports = "allow"
 
 
 [thrift]
-version: 0.10.0
+version = "0.10.0"
 
 
 [python-setup]
-interpreter_constraints: >3
+interpreter_constraints = ">3"
 
 
 [test.pytest]
 # AURORA-1972: As a workaround for spuriously failing tests, test different
 # targets in isolation
-fast: False
-
-[pytest]
-# FIXME: Workaround for https://github.com/pytest-dev/pytest/issues/4770
-# Can be dropped once we upgrade to pants 1.14.0
-requirements: pytest==3.0.7
+fast = false
 
 # We have some modules that have side-effects upon import, including starting a repl, so we can't
 # use python-eval to validate our BUILD deps currently.
 [lint.python-eval]
-skip: True
+skip = true
 
 
 # We use isort for this.
 [pycheck-import-order]
-skip: True
+skip = true
 
 
 [pycheck-pycodestyle]
 # Code reference is here: http://pep8.readthedocs.org/en/latest/intro.html#error-codes
-ignore: [
+ignore = [
     # Aurora custom ignores:
     'E114',  # indentation is not a multiple of four (comment)
     'E116',  # unexpected indentation (comment)
@@ -93,4 +88,4 @@ ignore: [
 # T800 Instead of Context.CommandError use self.CommandError or cls.CommandError with
 #      instancemethods and classmethods respectively.
 [pycheck-class-factoring]
-skip: True
+skip = true
