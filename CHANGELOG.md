@@ -1,3 +1,7 @@
+Aurora Scheduler 0.24.1
+--------------------------------------------------------------------------------
+* [#149](https://github.com/aurora-scheduler/scheduler/pull/149) - Pants upgrade to 1.26
+
 Aurora Scheduler 0.24.0
 --------------------------------------------------------------------------------
 ## Pull Requests
