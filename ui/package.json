@@ -5,7 +5,7 @@
   "main": "index.js",
   "dependencies": {
     "aurora-ui-plugin": "file:plugin",
-    "bootstrap": "^3.3.7",
+    "bootstrap": "^4.6.0",
     "deep-equal": "^2.0.3",
     "diff": "^5.0.0",
     "es6-shim": "^0.35.3",
