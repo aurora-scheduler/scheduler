@@ -17,7 +17,7 @@
   },
   "devDependencies": {
     "ajv": "^7.1.1",
-    "ajv-keywords": "^3.5.2",
+    "ajv-keywords": "^4.0.0",
     "babel-core": "^6.26.0",
     "babel-eslint": "^10.1.0",
     "babel-jest": "^23.6.0",
