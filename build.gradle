@@ -374,7 +374,7 @@ dependencies {
 
   compile 'aopalliance:aopalliance:1.0'
   compile "ch.qos.logback:logback-classic:${logbackRev}"
-  compile "com.beust:jcommander:1.78"
+  compile "com.beust:jcommander:1.81"
   compile "com.google.inject:guice:${guiceRev}"
   compile "com.google.inject.extensions:guice-assistedinject:${guiceRev}"
   compile "com.google.inject.extensions:guice-multibindings:${guiceRev}"
