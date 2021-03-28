@@ -124,7 +124,7 @@ For more details, please see https://issues.apache.org/jira/browse/AURORA-1169
       force "org.apache.thrift:libthrift:${thriftRev}"
       force "org.apache.zookeeper:zookeeper:${zookeeperRev}"
       force "org.hamcrest:hamcrest-core:2.2"
-      force 'org.objenesis:objenesis:3.1'
+      force 'org.objenesis:objenesis:3.2'
       force "org.slf4j:slf4j-api:${slf4jRev}"
     }
   }
