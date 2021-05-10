@@ -5,7 +5,7 @@
   "main": "index.js",
   "dependencies": {
     "aurora-ui-plugin": "file:plugin",
-    "bootstrap": "^4.6.0",
+    "bootstrap": "^5.0.0",
     "deep-equal": "^2.0.3",
     "diff": "^5.0.0",
     "es6-shim": "^0.35.3",
@@ -46,7 +46,7 @@
     "sassjs-loader": "^2.0.0",
     "style-loader": "^2.0.0",
     "url-loader": "^4.1.0",
-    "webpack": "^4.44.0",
+    "webpack": "^5.37.0",
     "webpack-cli": "^4.0.0"
   },
   "jest": {
