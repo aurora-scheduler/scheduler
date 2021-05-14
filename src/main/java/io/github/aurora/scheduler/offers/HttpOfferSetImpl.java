@@ -19,6 +19,7 @@ import java.lang.annotation.Target;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -27,9 +28,9 @@ import java.util.stream.Collectors;
 
 import javax.inject.Qualifier;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Ordering;
-import com.google.gson.Gson;
 import com.google.inject.Inject;
 
 import org.apache.aurora.scheduler.base.TaskGroupKey;
@@ -65,7 +66,8 @@ public class HttpOfferSetImpl implements OfferSet {
 
   private static final Logger LOG = LoggerFactory.getLogger(HttpOfferSetImpl.class);
   private final Set<HostOffer> offers;
-  private final Gson gson = new Gson();
+  private final ObjectMapper jsonMapper = new ObjectMapper();
+
   private Integer timeoutMs;
   private URL endpoint;
   private Integer maxRetries;
@@ -151,7 +153,8 @@ public class HttpOfferSetImpl implements OfferSet {
       long startTime = System.nanoTime();
       // create json request & send the Rest API request to the scheduler plugin
       ScheduleRequest scheduleRequest = this.createRequest(resourceRequest, startTime);
-      LOG.debug("Sending request " + scheduleRequest.jobKey);
+      LOG.info("Sending request " + scheduleRequest.jobKey + " with " + this.offers.size()
+          + " offers");
       String responseStr = this.sendRequest(scheduleRequest);
       orderedOffers = processResponse(responseStr);
       LOG.debug("received response for " + scheduleRequest.jobKey);
@@ -210,7 +213,7 @@ public class HttpOfferSetImpl implements OfferSet {
       request.setConfig(requestConfig);
       request.addHeader("Content-Type", "application/json; utf-8");
       request.addHeader("Accept", "application/json");
-      request.setEntity(new StringEntity(gson.toJson(scheduleRequest)));
+      request.setEntity(new StringEntity(jsonMapper.writeValueAsString(scheduleRequest)));
       CloseableHttpResponse response = httpClient.execute(request);
       try {
         HttpEntity entity = response.getEntity();
@@ -228,12 +231,14 @@ public class HttpOfferSetImpl implements OfferSet {
   }
 
   List<HostOffer> processResponse(String responseStr) throws IOException {
+    List<String> extraOffers = new LinkedList<>();
     // process the response
-    ScheduleResponse response = gson.fromJson(responseStr, ScheduleResponse.class);
+    ScheduleResponse response = jsonMapper.readValue(responseStr, ScheduleResponse.class);
     if (response.error == null || response.hosts == null) {
       LOG.error("Response: " + responseStr);
       throw new IOException("response is malformed");
     }
+    LOG.info("Received " + response.hosts.size() + " offers");
 
     Map<String, HostOffer> offerMap = offers.stream()
             .collect(Collectors.toMap(offer -> offer.getAttributes().getHost(), offer -> offer));
@@ -242,7 +247,7 @@ public class HttpOfferSetImpl implements OfferSet {
       for (String host : response.hosts) {
         HostOffer offer = offerMap.get(host);
         if (offer == null) {
-          LOG.warn("Cannot find host " + host + " in the response");
+          extraOffers.add(host);
         } else {
           orderedOffers.add(offer);
         }
@@ -254,6 +259,18 @@ public class HttpOfferSetImpl implements OfferSet {
                 + "Please check the condition of these hosts: "
                 + Util.getHostnames(offers));
       }
+
+      long offSetDiff = offers.size() - (response.hosts.size() - extraOffers.size())
+          + extraOffers.size();
+      HttpOfferSetModule.offerSetDiff.add(offSetDiff);
+      if (offSetDiff > 0) {
+        LOG.warn("The number of different offers between the original and received offer sets is "
+            + offSetDiff);
+        if (!extraOffers.isEmpty()) {
+          LOG.error("Cannot find offers " + extraOffers + " in the original offer set");
+        }
+      }
+
       return orderedOffers;
     } else {
       LOG.error("Unable to get sorted offers due to " + response.error);
@@ -275,6 +292,22 @@ public class HttpOfferSetImpl implements OfferSet {
     public String toString() {
       return "Host{" + "name='" + name + '\'' + ", offer=" + offer + '}';
     }
+
+    public String getName() {
+      return name;
+    }
+
+    public void setName(String name) {
+      this.name = name;
+    }
+
+    public Resource getOffer() {
+      return offer;
+    }
+
+    public void setOffer(Resource offer) {
+      this.offer = offer;
+    }
   }
 
   // Resource is used between Aurora and MagicMatch.
@@ -292,6 +325,30 @@ public class HttpOfferSetImpl implements OfferSet {
     @Override
     public String toString() {
       return "Resource{" + "cpu=" + cpu + ", memory=" + memory + ", disk=" + disk + '}';
+    }
+
+    public double getCpu() {
+      return cpu;
+    }
+
+    public void setCpu(double cpu) {
+      this.cpu = cpu;
+    }
+
+    public double getMemory() {
+      return memory;
+    }
+
+    public void setMemory(double memory) {
+      this.memory = memory;
+    }
+
+    public double getDisk() {
+      return disk;
+    }
+
+    public void setDisk(double disk) {
+      this.disk = disk;
     }
   }
 
@@ -312,6 +369,30 @@ public class HttpOfferSetImpl implements OfferSet {
       return "ScheduleRequest{" + "jobKey=" + jobKey + "request=" + request
                 + ", hosts=" + hosts + '}';
     }
+
+    public String getJobKey() {
+      return jobKey;
+    }
+
+    public void setJobKey(String jobKey) {
+      this.jobKey = jobKey;
+    }
+
+    public Resource getRequest() {
+      return request;
+    }
+
+    public void setRequest(Resource request) {
+      this.request = request;
+    }
+
+    public List<Host> getHosts() {
+      return hosts;
+    }
+
+    public void setHosts(List<Host> hosts) {
+      this.hosts = hosts;
+    }
   }
 
   // ScheduleResponse is the scheduling result responded by MagicMatch
@@ -322,6 +403,22 @@ public class HttpOfferSetImpl implements OfferSet {
     @Override
     public String toString() {
       return "ScheduleResponse{" + "error='" + error + '\'' + ", hosts=" + hosts + '}';
+    }
+
+    public String getError() {
+      return error;
+    }
+
+    public void setError(String error) {
+      this.error = error;
+    }
+
+    public List<String> getHosts() {
+      return hosts;
+    }
+
+    public void setHosts(List<String> hosts) {
+      this.hosts = hosts;
     }
   }
 }

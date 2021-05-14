@@ -56,6 +56,7 @@ public class HttpOfferSetModule extends AbstractModule {
   private final Options options;
   private static final Logger LOG = LoggerFactory.getLogger(HttpOfferSetModule.class);
   static List<Long> latencyMsList = Collections.synchronizedList(new LinkedList<>());
+  static List<Long> offerSetDiff = Collections.synchronizedList(new LinkedList<>());
   private static long failureCount = 0;
   private static boolean enabled = false;
 
