@@ -91,6 +91,6 @@ public class StatCalculator implements Runnable {
     // reset the stats.
     HttpOfferSetModule.latencyMsList.clear();
     HttpOfferSetModule.resetFailureCount();
-//    HttpOfferSetModule.offerSetDiff.clear();
+    HttpOfferSetModule.offerSetDiff.clear();
   }
 }
