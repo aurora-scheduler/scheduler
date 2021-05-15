@@ -67,8 +67,8 @@ public class HttpOfferSetImpl implements OfferSet {
   private static final Logger LOG = LoggerFactory.getLogger(HttpOfferSetImpl.class);
   private final Set<HostOffer> offers;
   private final ObjectMapper jsonMapper = new ObjectMapper();
-  // we can reuse CloseableHttpClient for multiple requests
-  private static final CloseableHttpClient HTTP_CLIENT = HttpClients.createDefault();
+  // Using CloseableHttpClient for multiple requests
+  private final CloseableHttpClient httpClient = HttpClients.createDefault();
 
   private Integer timeoutMs;
   private URL endpoint;
@@ -214,7 +214,7 @@ public class HttpOfferSetImpl implements OfferSet {
     request.addHeader("Content-Type", "application/json; utf-8");
     request.addHeader("Accept", "application/json");
     request.setEntity(new StringEntity(jsonMapper.writeValueAsString(scheduleRequest)));
-    CloseableHttpResponse response = HTTP_CLIENT.execute(request);
+    CloseableHttpResponse response = httpClient.execute(request);
     try {
       HttpEntity entity = response.getEntity();
       if (entity == null) {
