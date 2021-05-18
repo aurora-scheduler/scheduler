@@ -209,7 +209,7 @@ public class HttpOfferSetImpl implements OfferSet {
     request.setConfig(requestConfig);
     request.addHeader("Content-Type", "application/json; utf-8");
     request.addHeader("Accept", "application/json");
-    request.setEntity(new StringEntity(new ObjectMapper().writeValueAsString(scheduleRequest)));
+    request.setEntity(new StringEntity(jsonMapper.writeValueAsString(scheduleRequest)));
     CloseableHttpResponse response = httpClient.execute(request);
     try {
       HttpEntity entity = response.getEntity();
