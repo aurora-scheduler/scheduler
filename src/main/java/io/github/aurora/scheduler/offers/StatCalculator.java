@@ -83,7 +83,7 @@ public class StatCalculator implements Runnable {
     metricCache.getUnchecked(failureCountName).set(failureCountName,
             HttpOfferSetModule.getFailureCount());
 
-    long maxOfferSetDiff = Util.max(HttpOfferSetModule.offerSetDiff);
+    long maxOfferSetDiff = Util.max(HttpOfferSetModule.offerSetDiffList);
     String maxOffSetDiffName = "http_offer_set_max_diff";
     metricCache.getUnchecked(maxOffSetDiffName).set(maxOffSetDiffName,
         maxOfferSetDiff);
@@ -91,6 +91,6 @@ public class StatCalculator implements Runnable {
     // reset the stats.
     HttpOfferSetModule.latencyMsList.clear();
     HttpOfferSetModule.resetFailureCount();
-    HttpOfferSetModule.offerSetDiff.clear();
+    HttpOfferSetModule.offerSetDiffList.clear();
   }
 }

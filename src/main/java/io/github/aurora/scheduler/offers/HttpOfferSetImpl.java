@@ -18,8 +18,6 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -63,11 +61,10 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
  */
 @VisibleForTesting
 public class HttpOfferSetImpl implements OfferSet {
-
   private static final Logger LOG = LoggerFactory.getLogger(HttpOfferSetImpl.class);
+
   private final Set<HostOffer> offers;
   private final ObjectMapper jsonMapper = new ObjectMapper();
-  // Using CloseableHttpClient for multiple requests
   private final CloseableHttpClient httpClient = HttpClients.createDefault();
 
   private Integer timeoutMs;
@@ -158,8 +155,7 @@ public class HttpOfferSetImpl implements OfferSet {
       LOG.info("Sending request " + scheduleRequest.jobKey + " with " + this.offers.size()
           + " offers");
       String responseStr = this.sendRequest(scheduleRequest);
-      orderedOffers = processResponse(responseStr);
-      LOG.debug("received response for " + scheduleRequest.jobKey);
+      orderedOffers = processResponse(responseStr, HttpOfferSetModule.offerSetDiffList);
       HttpOfferSetModule.latencyMsList.add(System.nanoTime() - startTime);
     } catch (IOException e) {
       LOG.error("Failed to schedule the task of "
@@ -213,7 +209,7 @@ public class HttpOfferSetImpl implements OfferSet {
     request.setConfig(requestConfig);
     request.addHeader("Content-Type", "application/json; utf-8");
     request.addHeader("Accept", "application/json");
-    request.setEntity(new StringEntity(jsonMapper.writeValueAsString(scheduleRequest)));
+    request.setEntity(new StringEntity(new ObjectMapper().writeValueAsString(scheduleRequest)));
     CloseableHttpResponse response = httpClient.execute(request);
     try {
       HttpEntity entity = response.getEntity();
@@ -227,8 +223,8 @@ public class HttpOfferSetImpl implements OfferSet {
     }
   }
 
-  List<HostOffer> processResponse(String responseStr) throws IOException {
-    List<String> extraOffers = new LinkedList<>();
+  List<HostOffer> processResponse(String responseStr, List<Long> offerSetDiffList)
+      throws IOException {
     // process the response
     ScheduleResponse response = jsonMapper.readValue(responseStr, ScheduleResponse.class);
     if (response.error == null || response.hosts == null) {
@@ -239,27 +235,15 @@ public class HttpOfferSetImpl implements OfferSet {
 
     Map<String, HostOffer> offerMap = offers.stream()
             .collect(Collectors.toMap(offer -> offer.getAttributes().getHost(), offer -> offer));
-    List<HostOffer> orderedOffers = new ArrayList<>();
     if (response.error.trim().isEmpty()) {
-      for (String host : response.hosts) {
-        HostOffer offer = offerMap.get(host);
-        if (offer == null) {
-          extraOffers.add(host);
-        } else {
-          orderedOffers.add(offer);
-        }
-      }
-      LOG.debug("Sorted offers: " + String.join(",",
-          response.hosts.subList(0, Math.min(5, response.hosts.size())) + "..."));
-      if (orderedOffers.isEmpty()) {
-        LOG.warn("Cannot find any offers for this task. "
-                + "Please check the condition of these hosts: "
-                + Util.getHostnames(offers));
-      }
+      List<HostOffer> orderedOffers = response.hosts.stream().map(host -> offerMap.get(host)).
+          filter(offer -> offer != null).collect(Collectors.toList());
+      List<String> extraOffers = response.hosts.stream().filter(host -> offerMap.get(host) == null)
+          .collect(Collectors.toList());
 
       long offSetDiff = offers.size() - (response.hosts.size() - extraOffers.size())
           + extraOffers.size();
-      HttpOfferSetModule.offerSetDiff.add(offSetDiff);
+      offerSetDiffList.add(offSetDiff);
       if (offSetDiff > 0) {
         LOG.warn("The number of different offers between the original and received offer sets is "
             + offSetDiff);
@@ -270,13 +254,13 @@ public class HttpOfferSetImpl implements OfferSet {
 
       return orderedOffers;
     } else {
-      LOG.error("Unable to get sorted offers due to " + response.error);
+      LOG.error("Unable to receive offers from " + this.endpoint + " due to " + response.error);
       throw new IOException(response.error);
     }
   }
 
   // Host represents for each host offer.
-  static class Host {
+  public static class Host {
     String name;
     Resource offer;
 
