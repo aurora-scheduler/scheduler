@@ -255,6 +255,16 @@ class JobUpdateControllerImpl implements JobUpdateController {
   @Override
   public void pause(final IJobUpdateKey key, AuditData auditData) throws UpdateStateException {
     requireNonNull(key);
+    Optional<IJobUpdateDetails> update = storage.read(p -> p.getJobUpdateStore()
+            .fetchJobUpdate(key));
+    Boolean isAutoPauseEnabled = update.isPresent() && isAutoPauseEnabled(update.get()
+            .getUpdate()
+            .getInstructions()
+            .getSettings()
+            .getUpdateStrategy());
+    if (isAutoPauseEnabled && instancesSeen.containsKey(key)) {
+      throw new UpdateStateException("Pauses not allowed on auto-pause enabled job updates");
+    }
     LOG.info("Attempting to pause update " + key);
     unscopedChangeUpdateStatus(
         key,
