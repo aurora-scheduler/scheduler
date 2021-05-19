@@ -183,14 +183,16 @@ public class HttpOfferSetImpl implements OfferSet {
     Resource req = new Resource(resourceRequest.getResourceBag().valueOf(ResourceType.CPUS),
         resourceRequest.getResourceBag().valueOf(ResourceType.RAM_MB),
         resourceRequest.getResourceBag().valueOf(ResourceType.DISK_MB));
-    List<Host> hosts = offers.stream().map(offer -> new Host(offer.getAttributes().getHost(),
-            new Resource(offer.getResourceBag(true).valueOf(ResourceType.CPUS)
-                    + offer.getResourceBag(false).valueOf(ResourceType.CPUS),
-                    offer.getResourceBag(true).valueOf(ResourceType.RAM_MB)
-                            + offer.getResourceBag(false).valueOf(ResourceType.RAM_MB),
-                    offer.getResourceBag(true).valueOf(ResourceType.DISK_MB)
-                    + offer.getResourceBag(false).valueOf(ResourceType.DISK_MB))))
-            .collect(Collectors.toList());
+    List<Host> hosts =
+        offers.stream()
+                .map(offer -> new Host(offer.getAttributes().getHost(),
+                  new Resource(offer.getResourceBag(true).valueOf(ResourceType.CPUS)
+                          + offer.getResourceBag(false).valueOf(ResourceType.CPUS),
+                          offer.getResourceBag(true).valueOf(ResourceType.RAM_MB)
+                                  + offer.getResourceBag(false).valueOf(ResourceType.RAM_MB),
+                          offer.getResourceBag(true).valueOf(ResourceType.DISK_MB)
+                          + offer.getResourceBag(false).valueOf(ResourceType.DISK_MB))))
+                .collect(Collectors.toList());
     IJobKey jobKey = resourceRequest.getTask().getJob();
     String jobKeyStr = jobKey.getRole() + "-" + jobKey.getEnvironment() + "-" + jobKey.getName()
             + "@" + startTime;
@@ -215,9 +217,8 @@ public class HttpOfferSetImpl implements OfferSet {
       HttpEntity entity = response.getEntity();
       if (entity == null) {
         throw new IOException("Empty response from the external http endpoint.");
-      } else {
-        return EntityUtils.toString(entity);
       }
+      return EntityUtils.toString(entity);
     } finally {
       response.close();
     }
@@ -227,7 +228,7 @@ public class HttpOfferSetImpl implements OfferSet {
       throws IOException {
     // process the response
     ScheduleResponse response = jsonMapper.readValue(responseStr, ScheduleResponse.class);
-    if (response.error == null || response.hosts == null) {
+    if (response == null || response.error == null || response.hosts == null) {
       LOG.error("Response: " + responseStr);
       throw new IOException("response is malformed");
     }
@@ -236,10 +237,13 @@ public class HttpOfferSetImpl implements OfferSet {
     Map<String, HostOffer> offerMap = offers.stream()
             .collect(Collectors.toMap(offer -> offer.getAttributes().getHost(), offer -> offer));
     if (response.error.trim().isEmpty()) {
-      List<HostOffer> orderedOffers = response.hosts.stream().map(host -> offerMap.get(host)).
-          filter(offer -> offer != null).collect(Collectors.toList());
-      List<String> extraOffers = response.hosts.stream().filter(host -> offerMap.get(host) == null)
-          .collect(Collectors.toList());
+      List<HostOffer> orderedOffers = response.hosts.stream()
+            .map(host -> offerMap.get(host))
+            .filter(offer -> offer != null)
+            .collect(Collectors.toList());
+      List<String> extraOffers = response.hosts.stream()
+            .filter(host -> offerMap.get(host) == null)
+            .collect(Collectors.toList());
 
       long offSetDiff = offers.size() - (response.hosts.size() - extraOffers.size())
           + extraOffers.size();
@@ -247,20 +251,20 @@ public class HttpOfferSetImpl implements OfferSet {
       if (offSetDiff > 0) {
         LOG.warn("The number of different offers between the original and received offer sets is "
             + offSetDiff);
-        if (!extraOffers.isEmpty()) {
-          LOG.error("Cannot find offers " + extraOffers + " in the original offer set");
-        }
+      }
+      if (!extraOffers.isEmpty()) {
+        LOG.error("Cannot find offers " + extraOffers + " in the original offer set");
       }
 
       return orderedOffers;
-    } else {
-      LOG.error("Unable to receive offers from " + this.endpoint + " due to " + response.error);
-      throw new IOException(response.error);
     }
+
+    LOG.error("Unable to receive offers from " + this.endpoint + " due to " + response.error);
+    throw new IOException(response.error);
   }
 
   // Host represents for each host offer.
-  public static class Host {
+  static class Host {
     String name;
     Resource offer;
 
