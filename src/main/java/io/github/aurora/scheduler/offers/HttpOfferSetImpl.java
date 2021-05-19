@@ -24,6 +24,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.stream.Collectors;
 
+import javax.annotation.Nonnull;
 import javax.inject.Qualifier;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -213,25 +214,17 @@ public class HttpOfferSetImpl implements OfferSet {
     request.addHeader("Accept", "application/json");
     request.setEntity(new StringEntity(jsonMapper.writeValueAsString(scheduleRequest)));
     CloseableHttpResponse response = httpClient.execute(request);
-    try {
-      HttpEntity entity = response.getEntity();
-      if (entity == null) {
-        throw new IOException("Empty response from the external http endpoint.");
-      }
-      return EntityUtils.toString(entity);
-    } finally {
-      response.close();
+    HttpEntity entity = response.getEntity();
+    if (entity == null) {
+      throw new IOException("Empty response from the external http endpoint.");
     }
+    return EntityUtils.toString(entity);
   }
 
   List<HostOffer> processResponse(String responseStr, List<Long> offerSetDiffList)
       throws IOException {
     // process the response
     ScheduleResponse response = jsonMapper.readValue(responseStr, ScheduleResponse.class);
-    if (response == null || response.error == null || response.hosts == null) {
-      LOG.error("Response: " + responseStr);
-      throw new IOException("response is malformed");
-    }
     LOG.info("Received " + response.hosts.size() + " offers");
 
     Map<String, HostOffer> offerMap = offers.stream()
@@ -246,7 +239,7 @@ public class HttpOfferSetImpl implements OfferSet {
             .collect(Collectors.toList());
 
       long offSetDiff = offers.size() - (response.hosts.size() - extraOffers.size())
-          + extraOffers.size();
+                          + extraOffers.size();
       offerSetDiffList.add(offSetDiff);
       if (offSetDiff > 0) {
         LOG.warn("The number of different offers between the original and received offer sets is "
@@ -264,8 +257,11 @@ public class HttpOfferSetImpl implements OfferSet {
   }
 
   // Host represents for each host offer.
+  @Nonnull
   static class Host {
+    @Nonnull
     String name;
+    @Nonnull
     Resource offer;
 
     Host(String mName, Resource mOffer) {
@@ -296,6 +292,7 @@ public class HttpOfferSetImpl implements OfferSet {
   }
 
   // Resource is used between Aurora and MagicMatch.
+  @Nonnull
   static class Resource {
     double cpu;
     double memory;
@@ -339,8 +336,11 @@ public class HttpOfferSetImpl implements OfferSet {
 
   // ScheduleRequest is the request sent to MagicMatch.
   static class ScheduleRequest {
+    @Nonnull
     String jobKey;
+    @Nonnull
     Resource request;
+    @Nonnull
     List<Host> hosts;
 
     ScheduleRequest(Resource request, List<Host> hosts, String jobKey) {
@@ -381,9 +381,17 @@ public class HttpOfferSetImpl implements OfferSet {
   }
 
   // ScheduleResponse is the scheduling result responded by MagicMatch
+  @Nonnull
   static class ScheduleResponse {
+    @Nonnull
     String error;
+    @Nonnull
     List<String> hosts;
+
+    ScheduleResponse(String error, List<String> hosts) {
+      this.error = error;
+      this.hosts = hosts;
+    }
 
     @Override
     public String toString() {
