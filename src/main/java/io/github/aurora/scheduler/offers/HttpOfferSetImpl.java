@@ -74,8 +74,8 @@ public class HttpOfferSetImpl implements OfferSet {
   private URL endpoint;
   private Integer maxRetries;
 
-  public HttpOfferSetImpl(Set<HostOffer> offers) {
-    this.offers = offers;
+  public HttpOfferSetImpl(Set<HostOffer> mOffers) {
+    offers = mOffers;
   }
 
   @VisibleForTesting
@@ -95,9 +95,9 @@ public class HttpOfferSetImpl implements OfferSet {
 
   @Inject
   public HttpOfferSetImpl(Ordering<HostOffer> ordering,
-                          @TimeoutMs Integer timeoutMs,
+                          @TimeoutMs Integer mTimeoutMs,
                           @Endpoint String url,
-                          @MaxRetries Integer maxRetries) {
+                          @MaxRetries Integer mMaxRetries) {
     offers = new ConcurrentSkipListSet<>(ordering);
     try {
       endpoint = new URL(url);
@@ -108,11 +108,11 @@ public class HttpOfferSetImpl implements OfferSet {
       HttpOfferSetModule.enable(false);
       LOG.info("HttpOfferSetModule Disabled.");
     }
-    this.timeoutMs = timeoutMs;
-    this.maxRetries = maxRetries;
-    LOG.info("HttpOfferSet's endpoint: " + this.endpoint);
-    LOG.info("HttpOfferSet's timeout: " + this.timeoutMs + " (ms)");
-    LOG.info("HttpOfferSet's max retries: " + this.maxRetries);
+    timeoutMs = mTimeoutMs;
+    maxRetries = mMaxRetries;
+    LOG.info("HttpOfferSet's endpoint: " + endpoint);
+    LOG.info("HttpOfferSet's timeout: " + timeoutMs + " (ms)");
+    LOG.info("HttpOfferSet's max retries: " + maxRetries);
   }
 
   @Override
@@ -153,9 +153,9 @@ public class HttpOfferSetImpl implements OfferSet {
     try {
       long startTime = System.nanoTime();
       // create json request & send the Rest API request to the scheduler plugin
-      ScheduleRequest scheduleRequest = this.createRequest(resourceRequest, startTime);
+      ScheduleRequest scheduleRequest = createRequest(resourceRequest, startTime);
       LOG.info("Sending request " + scheduleRequest.jobKey);
-      String responseStr = this.sendRequest(scheduleRequest);
+      String responseStr = sendRequest(scheduleRequest);
       orderedOffers = processResponse(responseStr, HttpOfferSetModule.offerSetDiffList);
       HttpOfferSetModule.latencyMsList.add(System.nanoTime() - startTime);
     } catch (IOException e) {
@@ -381,7 +381,7 @@ public class HttpOfferSetImpl implements OfferSet {
     }
 
     public void setRequest(Resource mRequest) {
-      this.request = mRequest;
+      request = mRequest;
     }
 
     public List<Host> getHosts() {
@@ -389,7 +389,7 @@ public class HttpOfferSetImpl implements OfferSet {
     }
 
     public void setHosts(List<Host> mHosts) {
-      this.hosts = mHosts;
+      hosts = mHosts;
     }
   }
 
@@ -409,16 +409,16 @@ public class HttpOfferSetImpl implements OfferSet {
       return error;
     }
 
-    public void setError(String error) {
-      this.error = error;
+    public void setError(String mError) {
+      error = mError;
     }
 
     public List<String> getHosts() {
       return hosts;
     }
 
-    public void setHosts(List<String> hosts) {
-      this.hosts = hosts;
+    public void setHosts(List<String> mHosts) {
+      hosts = mHosts;
     }
   }
 }

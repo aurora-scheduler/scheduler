@@ -97,9 +97,9 @@ public class HttpOfferSetModule extends AbstractModule {
     CommandLine.registerCustomOptions(new Options());
   }
 
-  public HttpOfferSetModule(CliOptions options) {
-    this.cliOptions = options;
-    this.options = options.getCustom(Options.class);
+  public HttpOfferSetModule(CliOptions mOptions) {
+    cliOptions = mOptions;
+    options = mOptions.getCustom(Options.class);
   }
 
   @Override
@@ -152,18 +152,17 @@ public class HttpOfferSetModule extends AbstractModule {
 
     @Inject
     StatUpdater(
-            @Executor ScheduledExecutorService executor,
-            StatCalculator calculator,
-            @RefreshRateMs Integer refreshRateMs) {
-      this.executor = requireNonNull(executor);
-      this.calculator = requireNonNull(calculator);
-      this.refreshRateMs = refreshRateMs;
+            @Executor ScheduledExecutorService mExecutor,
+            StatCalculator mCalculator,
+            @RefreshRateMs Integer mRefreshRateMs) {
+      executor = requireNonNull(mExecutor);
+      calculator = requireNonNull(mCalculator);
+      refreshRateMs = mRefreshRateMs;
     }
 
     @Override
     protected void startUp() {
-      long interval = this.refreshRateMs;
-      executor.scheduleAtFixedRate(calculator, 0, interval, TimeUnit.MILLISECONDS);
+      executor.scheduleAtFixedRate(calculator, 0, refreshRateMs, TimeUnit.MILLISECONDS);
     }
 
     @Override

@@ -34,8 +34,8 @@ public class StatCalculator implements Runnable {
     private final StatsProvider statsProvider;
     private boolean exported;
 
-    Counter(StatsProvider statsProvider) {
-      this.statsProvider = statsProvider;
+    Counter(StatsProvider mStatsProvider) {
+      statsProvider = mStatsProvider;
     }
 
     @Override
@@ -55,7 +55,7 @@ public class StatCalculator implements Runnable {
   @Inject
   StatCalculator(final StatsProvider statsProvider) {
     requireNonNull(statsProvider);
-    this.metricCache = CacheBuilder.newBuilder().build(
+    metricCache = CacheBuilder.newBuilder().build(
         new CacheLoader<String, StatCalculator.Counter>() {
           public StatCalculator.Counter load(String key) {
             return new StatCalculator.Counter(statsProvider.untracked());
