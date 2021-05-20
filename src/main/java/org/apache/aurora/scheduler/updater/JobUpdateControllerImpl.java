@@ -262,7 +262,7 @@ class JobUpdateControllerImpl implements JobUpdateController {
             .getInstructions()
             .getSettings()
             .getUpdateStrategy());
-    if (isAutoPauseEnabled && instancesSeen.containsKey(key)) {
+    if (isAutoPauseEnabled) {
       throw new UpdateStateException("Pauses not allowed on auto-pause enabled job updates");
     }
     LOG.info("Attempting to pause update " + key);
