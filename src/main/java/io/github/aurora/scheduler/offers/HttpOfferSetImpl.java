@@ -246,15 +246,16 @@ public class HttpOfferSetImpl implements OfferSet {
     if (offSetDiff > 0) {
       LOG.warn("The number of different offers between the original and received offer sets is "
           + offSetDiff);
-    }
-    if (LOG.isDebugEnabled() && offSetDiff > 0) {
-      List<String> missedOffers = offers.stream()
+      if (LOG.isDebugEnabled()) {
+        List<String> missedOffers = offers.stream()
             .map(offer -> offer.getAttributes().getHost())
             .filter(host -> !response.hosts.contains(host))
             .collect(Collectors.toList());
-      LOG.debug("missed offers: " + missedOffers);
-      LOG.debug("extra offers: " + extraOffers);
+        LOG.debug("missed offers: " + missedOffers);
+        LOG.debug("extra offers: " + extraOffers);
+      }
     }
+
     if (!extraOffers.isEmpty()) {
       LOG.error("Cannot find offers " + extraOffers + " in the original offer set");
     }
