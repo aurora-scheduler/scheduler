@@ -110,6 +110,7 @@ import org.apache.aurora.scheduler.updater.UpdaterModule.UpdateActionBatchWorker
 import org.easymock.EasyMock;
 import org.easymock.IExpectationSetters;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -2029,6 +2030,68 @@ public class JobUpdaterIT extends EasyMockTest {
             .put(0, OLD_CONFIG)
             .put(1, OLD_CONFIG)
             .build());
+  }
+
+  @Test
+  public void testPauseFailsWithAutoPauseEnabled() throws Exception {
+    expectTaskKilled().times(3);
+    control.replay();
+
+    JobUpdate builder = makeJobUpdate(makeInstanceConfig(0, 2, OLD_CONFIG)).newBuilder();
+    builder.getInstructions().getSettings()
+            .setUpdateStrategy(
+                    JobUpdateStrategy.varBatchStrategy(
+                            new VariableBatchJobUpdateStrategy()
+                                    .setGroupSizes(ImmutableList.of(1, 2))
+                                    .setAutopauseAfterBatch(true)));
+    IJobUpdate update = setInstanceCount(IJobUpdate.build(builder), 3);
+    insertInitialTasks(update);
+
+    for (int i = 0; i <= 2; ++i) {
+      changeState(JOB, i, ASSIGNED, STARTING, RUNNING);
+    }
+    clock.advance(WATCH_TIMEOUT);
+
+    ImmutableMultimap.Builder<Integer, JobUpdateAction> actions = ImmutableMultimap.builder();
+
+    // Update first batch
+    updater.start(update, AUDIT);
+    actions.put(0, INSTANCE_UPDATING);
+    assertState(ROLLING_FORWARD, actions.build());
+    // Pause should fail
+    Assert.assertThrows(UpdateStateException.class, () -> updater.pause(UPDATE_ID, AUDIT));
+    changeState(JOB, 0, FINISHED, ASSIGNED, STARTING, RUNNING);
+    clock.advance(WATCH_TIMEOUT);
+    actions.put(0, INSTANCE_UPDATED);
+
+    assertState(ROLL_FORWARD_PAUSED, actions.build());
+    // Pause should fail
+    Assert.assertThrows(UpdateStateException.class, () -> updater.pause(UPDATE_ID, AUDIT));
+    updater.resume(UPDATE_ID, AUDIT);
+
+    actions.put(1, INSTANCE_UPDATING).put(2, INSTANCE_UPDATING);
+    assertState(ROLLING_FORWARD, actions.build());
+    // Pause should fail
+    Assert.assertThrows(UpdateStateException.class, () -> updater.pause(UPDATE_ID, AUDIT));
+
+    // Update second batch
+    changeState(JOB, 1, FINISHED, ASSIGNED, STARTING, RUNNING);
+    changeState(JOB, 2, FINISHED, ASSIGNED, STARTING, RUNNING);
+    clock.advance(WATCH_TIMEOUT);
+
+    actions.put(1, INSTANCE_UPDATED);
+    actions.put(2, INSTANCE_UPDATED);
+
+    assertState(ROLLED_FORWARD, actions.build());
+    Assert.assertThrows(UpdateStateException.class, () -> updater.pause(UPDATE_ID, AUDIT));
+
+    assertJobState(
+            JOB,
+            ImmutableMap.<Integer, ITaskConfig>builder()
+                    .put(0, NEW_CONFIG)
+                    .put(1, NEW_CONFIG)
+                    .put(2, NEW_CONFIG)
+                    .build());
   }
 
   private Collection<IScheduledTask> getTasksInState(IJobKey job, ScheduleStatus status) {
