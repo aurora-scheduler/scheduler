@@ -15,6 +15,7 @@ package io.github.aurora.scheduler.offers;
 
 import java.io.IOException;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 
 import org.apache.aurora.common.testing.easymock.EasyMockTest;
@@ -66,20 +67,24 @@ public class HttpOfferSetImplTest extends EasyMockTest {
             + HOST_A + "\",\""
             + HOST_B + "\",\""
             + HOST_C + "\"]}";
-    List<HostOffer> sortedOffers = httpOfferSet.processResponse(responseStr);
+    List<Long> offerSetDiffList = new LinkedList<>();
+
+    List<HostOffer> sortedOffers = httpOfferSet.processResponse(responseStr, offerSetDiffList);
     assertEquals(sortedOffers.size(), 3);
     assertEquals(sortedOffers.get(0).getAttributes().getHost(), HOST_A);
     assertEquals(sortedOffers.get(1).getAttributes().getHost(), HOST_B);
     assertEquals(sortedOffers.get(2).getAttributes().getHost(), HOST_C);
+    assertEquals((long) offerSetDiffList.get(0), 0);
 
     // plugin returns less offers than Aurora has.
     responseStr = "{\"error\": \"\", \"hosts\": [\""
             + HOST_A + "\",\""
             + HOST_C + "\"]}";
-    sortedOffers = httpOfferSet.processResponse(responseStr);
+    sortedOffers = httpOfferSet.processResponse(responseStr, offerSetDiffList);
     assertEquals(sortedOffers.size(), 2);
     assertEquals(sortedOffers.get(0).getAttributes().getHost(), HOST_A);
     assertEquals(sortedOffers.get(1).getAttributes().getHost(), HOST_C);
+    assertEquals((long) offerSetDiffList.get(1), 1);
 
     // plugin returns more offers than Aurora has.
     responseStr = "{\"error\": \"\", \"hosts\": [\""
@@ -87,11 +92,23 @@ public class HttpOfferSetImplTest extends EasyMockTest {
             + HOST_B + "\",\""
             + HOST_D + "\",\""
             + HOST_C + "\"]}";
-    sortedOffers = httpOfferSet.processResponse(responseStr);
+    sortedOffers = httpOfferSet.processResponse(responseStr, offerSetDiffList);
     assertEquals(sortedOffers.size(), 3);
     assertEquals(sortedOffers.get(0).getAttributes().getHost(), HOST_A);
     assertEquals(sortedOffers.get(1).getAttributes().getHost(), HOST_B);
     assertEquals(sortedOffers.get(2).getAttributes().getHost(), HOST_C);
+    assertEquals((long) offerSetDiffList.get(2), 1);
+
+    // plugin omits 1 offer & returns 1 extra offer
+    responseStr = "{\"error\": \"\", \"hosts\": [\""
+        + HOST_A + "\",\""
+        + HOST_D + "\",\""
+        + HOST_C + "\"]}";
+    sortedOffers = httpOfferSet.processResponse(responseStr, offerSetDiffList);
+    assertEquals(sortedOffers.size(), 2);
+    assertEquals(sortedOffers.get(0).getAttributes().getHost(), HOST_A);
+    assertEquals(sortedOffers.get(1).getAttributes().getHost(), HOST_C);
+    assertEquals((long) offerSetDiffList.get(3), 2);
 
     responseStr = "{\"error\": \"Error\", \"hosts\": [\""
             + HOST_A + "\",\""
@@ -99,16 +116,25 @@ public class HttpOfferSetImplTest extends EasyMockTest {
             + HOST_C + "\"]}";
     boolean isException = false;
     try {
-      httpOfferSet.processResponse(responseStr);
+      httpOfferSet.processResponse(responseStr, offerSetDiffList);
     } catch (IOException ioe) {
       isException = true;
     }
     assertTrue(isException);
 
-    responseStr = "{\"error\": \"\"}";
+    responseStr = "{\"error\": \"error\"}";
     isException = false;
     try {
-      httpOfferSet.processResponse(responseStr);
+      httpOfferSet.processResponse(responseStr, new LinkedList<>());
+    } catch (IOException ioe) {
+      isException = true;
+    }
+    assertTrue(isException);
+
+    responseStr = "{\"weird\": \"cannot decode this json string\"}";
+    isException = false;
+    try {
+      httpOfferSet.processResponse(responseStr, new LinkedList<>());
     } catch (IOException ioe) {
       isException = true;
     }

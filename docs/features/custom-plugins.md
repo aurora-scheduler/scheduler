@@ -58,3 +58,13 @@ The server returns the response in the following format.
 }
 ```
 In the above example, the external REST API sorts the offers based on the number of available vcpus.
+
+How to monitor HTTP OfferSet?
+We can monitor this plugin by looking at the endpoint `/vars`. The following metrics are available when HTTP OfferSet is enabled:
+- `http_offer_set_avg_latency_ms`: The average latency per scheduling cycle in milliseconds.
+- `http_offer_set_median_latency_ms`: The median latency per scheduling cycle in milliseconds.
+- `http_offer_set_worst_latency_ms`: The worst latency per scheduling cycle in milliseconds.
+- `http_offer_set_failure_count`: The number of scheduling failures.
+- `http_offer_set_max_diff`: The number of different offers between the original `OfferSet` and the received one.
+
+HTTP OfferSet resets the above metrics every `sla_stat_refresh_interval`.
