@@ -37,6 +37,7 @@ import org.apache.aurora.scheduler.base.TaskGroupKey;
 import org.apache.aurora.scheduler.filter.SchedulingFilter.ResourceRequest;
 import org.apache.aurora.scheduler.offers.HostOffer;
 import org.apache.aurora.scheduler.offers.OfferSet;
+import org.apache.aurora.scheduler.resources.ResourceBag;
 import org.apache.aurora.scheduler.resources.ResourceType;
 import org.apache.aurora.scheduler.storage.entities.IJobKey;
 import org.apache.http.HttpEntity;
@@ -185,13 +186,7 @@ public class HttpOfferSetImpl implements OfferSet {
         resourceRequest.getResourceBag().valueOf(ResourceType.DISK_MB));
     List<Host> hosts =
         offers.stream()
-                .map(offer -> new Host(offer.getAttributes().getHost(),
-                  new Resource(offer.getResourceBag(true).valueOf(ResourceType.CPUS)
-                          + offer.getResourceBag(false).valueOf(ResourceType.CPUS),
-                          offer.getResourceBag(true).valueOf(ResourceType.RAM_MB)
-                                  + offer.getResourceBag(false).valueOf(ResourceType.RAM_MB),
-                          offer.getResourceBag(true).valueOf(ResourceType.DISK_MB)
-                          + offer.getResourceBag(false).valueOf(ResourceType.DISK_MB))))
+                .map(offer -> new Host(offer.getAttributes().getHost(), new Resource(offer)))
                 .collect(Collectors.toList());
     IJobKey jobKey = resourceRequest.getTask().getJob();
     String jobKeyStr = jobKey.getRole() + "-" + jobKey.getEnvironment() + "-" + jobKey.getName()
@@ -231,42 +226,42 @@ public class HttpOfferSetImpl implements OfferSet {
 
     Map<String, HostOffer> offerMap = offers.stream()
             .collect(Collectors.toMap(offer -> offer.getAttributes().getHost(), offer -> offer));
-    if (response.error.trim().isEmpty()) {
-      List<HostOffer> orderedOffers = response.hosts.stream()
-            .map(host -> offerMap.get(host))
-            .filter(offer -> offer != null)
-            .collect(Collectors.toList());
-      List<String> extraOffers = response.hosts.stream()
-            .filter(host -> offerMap.get(host) == null)
-            .collect(Collectors.toList());
-
-      //offSetDiff is the total number of missing offers and the extra offers
-      long offSetDiff = offers.size() - (response.hosts.size() - extraOffers.size())
-                          + extraOffers.size();
-      offerSetDiffList.add(offSetDiff);
-      if (offSetDiff > 0) {
-        LOG.warn("The number of different offers between the original and received offer sets is "
-            + offSetDiff);
-      }
-      if (LOG.isDebugEnabled() && offSetDiff > 0) {
-        List<String> missedOffers = offers.stream()
-              .map(offer -> offer.getAttributes().getHost())
-              .filter(host -> !response.hosts.contains(host))
-              .collect(Collectors.toList());
-        LOG.debug("missed offers: " + missedOffers);
-        LOG.debug("extra offers: " + extraOffers);
-      }
-      if (!extraOffers.isEmpty()) {
-        LOG.error("Cannot find offers " + extraOffers + " in the original offer set");
-      }
-
-      return orderedOffers;
+    if (!response.error.trim().isEmpty()) {
+      LOG.error("Unable to receive offers from " + endpoint + " due to " + response.error);
+      throw new IOException(response.error);
     }
-    LOG.error("Unable to receive offers from " + endpoint + " due to " + response.error);
-    throw new IOException(response.error);
+
+    List<HostOffer> orderedOffers = response.hosts.stream()
+          .map(host -> offerMap.get(host))
+          .filter(offer -> offer != null)
+          .collect(Collectors.toList());
+    List<String> extraOffers = response.hosts.stream()
+          .filter(host -> offerMap.get(host) == null)
+          .collect(Collectors.toList());
+
+    //offSetDiff is the total number of missing offers and the extra offers
+    long offSetDiff = offers.size() - (response.hosts.size() - extraOffers.size())
+                        + extraOffers.size();
+    offerSetDiffList.add(offSetDiff);
+    if (offSetDiff > 0) {
+      LOG.warn("The number of different offers between the original and received offer sets is "
+          + offSetDiff);
+    }
+    if (LOG.isDebugEnabled() && offSetDiff > 0) {
+      List<String> missedOffers = offers.stream()
+            .map(offer -> offer.getAttributes().getHost())
+            .filter(host -> !response.hosts.contains(host))
+            .collect(Collectors.toList());
+      LOG.debug("missed offers: " + missedOffers);
+      LOG.debug("extra offers: " + extraOffers);
+    }
+    if (!extraOffers.isEmpty()) {
+      LOG.error("Cannot find offers " + extraOffers + " in the original offer set");
+    }
+
+    return orderedOffers;
   }
 
-  // Host represents for each host offer.
   @Nonnull
   static class Host {
     @Nonnull
@@ -301,12 +296,19 @@ public class HttpOfferSetImpl implements OfferSet {
     }
   }
 
-  // Resource is used between Aurora and MagicMatch.
   @Nonnull
   static class Resource {
     double cpu;
     double memory;
     double disk;
+
+    Resource(HostOffer offer) {
+      ResourceBag revocable = offer.getResourceBag(true);
+      ResourceBag nonRevocable = offer.getResourceBag(false);
+      cpu = revocable.valueOf(ResourceType.CPUS) + nonRevocable.valueOf(ResourceType.CPUS);
+      memory = revocable.valueOf(ResourceType.RAM_MB) + nonRevocable.valueOf(ResourceType.RAM_MB);
+      disk = revocable.valueOf(ResourceType.DISK_MB) + nonRevocable.valueOf(ResourceType.DISK_MB);
+    }
 
     Resource(double mCpu, double mMemory, double mDisk) {
       cpu = mCpu;
@@ -344,7 +346,6 @@ public class HttpOfferSetImpl implements OfferSet {
     }
   }
 
-  // ScheduleRequest is the request sent to MagicMatch.
   @Nonnull
   static class ScheduleRequest {
     @Nonnull
@@ -391,7 +392,6 @@ public class HttpOfferSetImpl implements OfferSet {
     }
   }
 
-  // ScheduleResponse is the scheduling result responded by MagicMatch
   @Nonnull
   static class ScheduleResponse {
     @Nonnull
