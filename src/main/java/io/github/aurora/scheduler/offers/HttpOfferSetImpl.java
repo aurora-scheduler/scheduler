@@ -18,6 +18,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -125,8 +126,7 @@ public class HttpOfferSetImpl implements OfferSet {
 
   @Override
   public int size() {
-    // Potential gotcha - since this is a ConcurrentSkipListSet, size() is more
-    // expensive.
+    // Potential gotcha - since this is a ConcurrentSkipListSet, size() is more expensive.
     // Could track this separately if it turns out to pose problems.
     return offers.size();
   }
@@ -153,8 +153,7 @@ public class HttpOfferSetImpl implements OfferSet {
       long startTime = System.nanoTime();
       // create json request & send the Rest API request to the scheduler plugin
       ScheduleRequest scheduleRequest = this.createRequest(resourceRequest, startTime);
-      LOG.info("Sending request " + scheduleRequest.jobKey + " with " + this.offers.size()
-          + " offers");
+      LOG.info("Sending request " + scheduleRequest.jobKey);
       String responseStr = this.sendRequest(scheduleRequest);
       orderedOffers = processResponse(responseStr, HttpOfferSetModule.offerSetDiffList);
       HttpOfferSetModule.latencyMsList.add(System.nanoTime() - startTime);
@@ -203,27 +202,30 @@ public class HttpOfferSetImpl implements OfferSet {
   // sendRequest sends resorceRequest to the external plugin endpoint and gets json response.
   private String sendRequest(ScheduleRequest scheduleRequest) throws IOException {
     LOG.debug("Sending request for " + scheduleRequest.toString());
-    HttpPost request = new HttpPost(this.endpoint.toString());
+    HttpPost request = new HttpPost(endpoint.toString());
     RequestConfig requestConfig = RequestConfig.custom()
-            .setConnectionRequestTimeout(this.timeoutMs)
-            .setConnectTimeout(this.timeoutMs)
-            .setSocketTimeout(this.timeoutMs)
+            .setConnectionRequestTimeout(timeoutMs)
+            .setConnectTimeout(timeoutMs)
+            .setSocketTimeout(timeoutMs)
             .build();
     request.setConfig(requestConfig);
     request.addHeader("Content-Type", "application/json; utf-8");
     request.addHeader("Accept", "application/json");
     request.setEntity(new StringEntity(jsonMapper.writeValueAsString(scheduleRequest)));
-    CloseableHttpResponse response = httpClient.execute(request);
-    HttpEntity entity = response.getEntity();
-    if (entity == null) {
-      throw new IOException("Empty response from the external http endpoint.");
+    try {
+      CloseableHttpResponse response = httpClient.execute(request);
+      HttpEntity entity = response.getEntity();
+      if (entity == null) {
+        throw new IOException("Empty response from the external http endpoint.");
+      }
+      return EntityUtils.toString(entity);
+    } catch (IOException ie) {
+      throw ie;
     }
-    return EntityUtils.toString(entity);
   }
 
   List<HostOffer> processResponse(String responseStr, List<Long> offerSetDiffList)
       throws IOException {
-    // process the response
     ScheduleResponse response = jsonMapper.readValue(responseStr, ScheduleResponse.class);
     LOG.info("Received " + response.hosts.size() + " offers");
 
@@ -238,6 +240,7 @@ public class HttpOfferSetImpl implements OfferSet {
             .filter(host -> offerMap.get(host) == null)
             .collect(Collectors.toList());
 
+      //offSetDiff is the total number of missing offers and the extra offers
       long offSetDiff = offers.size() - (response.hosts.size() - extraOffers.size())
                           + extraOffers.size();
       offerSetDiffList.add(offSetDiff);
@@ -245,14 +248,21 @@ public class HttpOfferSetImpl implements OfferSet {
         LOG.warn("The number of different offers between the original and received offer sets is "
             + offSetDiff);
       }
+      if (LOG.isDebugEnabled() && offSetDiff > 0) {
+        List<String> missedOffers = offers.stream()
+              .map(offer -> offer.getAttributes().getHost())
+              .filter(host -> !response.hosts.contains(host))
+              .collect(Collectors.toList());
+        LOG.debug("missed offers: " + missedOffers);
+        LOG.debug("extra offers: " + extraOffers);
+      }
       if (!extraOffers.isEmpty()) {
         LOG.error("Cannot find offers " + extraOffers + " in the original offer set");
       }
 
       return orderedOffers;
     }
-
-    LOG.error("Unable to receive offers from " + this.endpoint + " due to " + response.error);
+    LOG.error("Unable to receive offers from " + endpoint + " due to " + response.error);
     throw new IOException(response.error);
   }
 
@@ -260,9 +270,9 @@ public class HttpOfferSetImpl implements OfferSet {
   @Nonnull
   static class Host {
     @Nonnull
-    String name;
+    String name = "";
     @Nonnull
-    Resource offer;
+    Resource offer = new Resource(0, 0, 0);
 
     Host(String mName, Resource mOffer) {
       name = mName;
@@ -278,16 +288,16 @@ public class HttpOfferSetImpl implements OfferSet {
       return name;
     }
 
-    public void setName(String name) {
-      this.name = name;
+    public void setName(String mName) {
+      name = mName;
     }
 
     public Resource getOffer() {
       return offer;
     }
 
-    public void setOffer(Resource offer) {
-      this.offer = offer;
+    public void setOffer(Resource mOffer) {
+      offer = mOffer;
     }
   }
 
@@ -298,10 +308,10 @@ public class HttpOfferSetImpl implements OfferSet {
     double memory;
     double disk;
 
-    Resource(double cpu, double memory, double disk) {
-      this.cpu = cpu;
-      this.memory = memory;
-      this.disk = disk;
+    Resource(double mCpu, double mMemory, double mDisk) {
+      cpu = mCpu;
+      memory = mMemory;
+      disk = mDisk;
     }
 
     @Override
@@ -313,40 +323,41 @@ public class HttpOfferSetImpl implements OfferSet {
       return cpu;
     }
 
-    public void setCpu(double cpu) {
-      this.cpu = cpu;
+    public void setCpu(double mCpu) {
+      cpu = mCpu;
     }
 
     public double getMemory() {
       return memory;
     }
 
-    public void setMemory(double memory) {
-      this.memory = memory;
+    public void setMemory(double mMemory) {
+      memory = mMemory;
     }
 
     public double getDisk() {
       return disk;
     }
 
-    public void setDisk(double disk) {
-      this.disk = disk;
+    public void setDisk(double mDisk) {
+      disk = mDisk;
     }
   }
 
   // ScheduleRequest is the request sent to MagicMatch.
+  @Nonnull
   static class ScheduleRequest {
     @Nonnull
-    String jobKey;
+    String jobKey = "";
     @Nonnull
-    Resource request;
+    Resource request = new Resource(0, 0, 0);
     @Nonnull
-    List<Host> hosts;
+    List<Host> hosts = new LinkedList<>();;
 
-    ScheduleRequest(Resource request, List<Host> hosts, String jobKey) {
-      this.request = request;
-      this.hosts = hosts;
-      this.jobKey = jobKey;
+    ScheduleRequest(Resource mRequest, List<Host> mHosts, String mJobKey) {
+      request = mRequest;
+      hosts = mHosts;
+      jobKey = mJobKey;
     }
 
     @Override
@@ -359,24 +370,24 @@ public class HttpOfferSetImpl implements OfferSet {
       return jobKey;
     }
 
-    public void setJobKey(String jobKey) {
-      this.jobKey = jobKey;
+    public void setJobKey(String mJobKey) {
+      jobKey = mJobKey;
     }
 
     public Resource getRequest() {
       return request;
     }
 
-    public void setRequest(Resource request) {
-      this.request = request;
+    public void setRequest(Resource mRequest) {
+      this.request = mRequest;
     }
 
     public List<Host> getHosts() {
       return hosts;
     }
 
-    public void setHosts(List<Host> hosts) {
-      this.hosts = hosts;
+    public void setHosts(List<Host> mHosts) {
+      this.hosts = mHosts;
     }
   }
 
@@ -384,14 +395,9 @@ public class HttpOfferSetImpl implements OfferSet {
   @Nonnull
   static class ScheduleResponse {
     @Nonnull
-    String error;
+    String error = "";
     @Nonnull
-    List<String> hosts;
-
-    ScheduleResponse(String error, List<String> hosts) {
-      this.error = error;
-      this.hosts = hosts;
-    }
+    List<String> hosts = new LinkedList<>();
 
     @Override
     public String toString() {

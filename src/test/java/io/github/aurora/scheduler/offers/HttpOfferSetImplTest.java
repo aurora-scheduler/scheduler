@@ -122,7 +122,16 @@ public class HttpOfferSetImplTest extends EasyMockTest {
     }
     assertTrue(isException);
 
-    responseStr = "{\"error\": \"\"}";
+    responseStr = "{\"error\": \"error\"}";
+    isException = false;
+    try {
+      httpOfferSet.processResponse(responseStr, new LinkedList<>());
+    } catch (IOException ioe) {
+      isException = true;
+    }
+    assertTrue(isException);
+
+    responseStr = "{\"weird\": \"cannot decode this json string\"}";
     isException = false;
     try {
       httpOfferSet.processResponse(responseStr, new LinkedList<>());
