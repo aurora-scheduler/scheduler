@@ -29,6 +29,7 @@ import com.google.common.collect.ContiguousSet;
 import com.google.common.collect.DiscreteDomain;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
@@ -83,6 +84,7 @@ import org.apache.aurora.scheduler.quota.QuotaCheckResult;
 import org.apache.aurora.scheduler.quota.QuotaManager;
 import org.apache.aurora.scheduler.quota.QuotaManager.QuotaException;
 import org.apache.aurora.scheduler.reconciliation.TaskReconciler;
+import org.apache.aurora.scheduler.sla.SlaManager;
 import org.apache.aurora.scheduler.state.StateChangeResult;
 import org.apache.aurora.scheduler.state.StateManager;
 import org.apache.aurora.scheduler.state.UUIDGenerator;
@@ -103,6 +105,7 @@ import org.apache.aurora.scheduler.storage.entities.IJobUpdateSettings;
 import org.apache.aurora.scheduler.storage.entities.IMetadata;
 import org.apache.aurora.scheduler.storage.entities.IRange;
 import org.apache.aurora.scheduler.storage.entities.IScheduledTask;
+import org.apache.aurora.scheduler.storage.entities.ISlaPolicy;
 import org.apache.aurora.scheduler.storage.entities.ITaskConfig;
 import org.apache.aurora.scheduler.thrift.aop.AnnotatedAuroraAdmin;
 import org.apache.aurora.scheduler.thrift.aop.ThriftWorkload;
@@ -154,6 +157,8 @@ class SchedulerThriftInterface implements AnnotatedAuroraAdmin {
   @VisibleForTesting
   static final String RESTART_SHARDS = STAT_PREFIX + "restartShards";
   @VisibleForTesting
+  static final String SLA_RESTART_SHARDS = STAT_PREFIX + "slaRestartShards";
+  @VisibleForTesting
   static final String START_MAINTENANCE = STAT_PREFIX + "startMaintenance";
   @VisibleForTesting
   static final String DRAIN_HOSTS = STAT_PREFIX + "drainHosts";
@@ -182,6 +187,7 @@ class SchedulerThriftInterface implements AnnotatedAuroraAdmin {
   private final CronJobManager cronJobManager;
   private final QuotaManager quotaManager;
   private final StateManager stateManager;
+  private final SlaManager slaManager;
   private final UUIDGenerator uuidGenerator;
   private final JobUpdateController jobUpdateController;
   private final ReadOnlyScheduler.Iface readOnlyScheduler;
@@ -192,6 +198,7 @@ class SchedulerThriftInterface implements AnnotatedAuroraAdmin {
   private final AtomicLong createOrUpdateCronCounter;
   private final AtomicLong killTasksCounter;
   private final AtomicLong restartShardsCounter;
+  private final AtomicLong slaRestartShardsCounter;
   private final AtomicLong startMaintenanceCounter;
   private final AtomicLong drainHostsCounter;
   private final AtomicLong slaDrainHostsCounter;
@@ -213,6 +220,7 @@ class SchedulerThriftInterface implements AnnotatedAuroraAdmin {
       MaintenanceController maintenance,
       QuotaManager quotaManager,
       StateManager stateManager,
+      SlaManager slaManager,
       UUIDGenerator uuidGenerator,
       JobUpdateController jobUpdateController,
       ReadOnlyScheduler.Iface readOnlyScheduler,
@@ -230,6 +238,7 @@ class SchedulerThriftInterface implements AnnotatedAuroraAdmin {
     this.cronJobManager = requireNonNull(cronJobManager);
     this.quotaManager = requireNonNull(quotaManager);
     this.stateManager = requireNonNull(stateManager);
+    this.slaManager = requireNonNull(slaManager);
     this.uuidGenerator = requireNonNull(uuidGenerator);
     this.jobUpdateController = requireNonNull(jobUpdateController);
     this.readOnlyScheduler = requireNonNull(readOnlyScheduler);
@@ -240,6 +249,7 @@ class SchedulerThriftInterface implements AnnotatedAuroraAdmin {
     this.createOrUpdateCronCounter = statsProvider.makeCounter(CREATE_OR_UPDATE_CRON);
     this.killTasksCounter = statsProvider.makeCounter(KILL_TASKS);
     this.restartShardsCounter = statsProvider.makeCounter(RESTART_SHARDS);
+    this.slaRestartShardsCounter = statsProvider.makeCounter(SLA_RESTART_SHARDS);
     this.startMaintenanceCounter = statsProvider.makeCounter(START_MAINTENANCE);
     this.drainHostsCounter = statsProvider.makeCounter(DRAIN_HOSTS);
     this.slaDrainHostsCounter = statsProvider.makeCounter(SLA_DRAIN_HOSTS);
@@ -531,6 +541,48 @@ class SchedulerThriftInterface implements AnnotatedAuroraAdmin {
             auditMessages.restartedByRemoteUser());
       }
       restartShardsCounter.addAndGet(shardIds.size());
+
+      return ok();
+    });
+  }
+
+  @Override
+  public Response slaRestartShards(
+      JobKey mutableJobKey,
+      Set<Integer> shardIds,
+      SlaPolicy slaPolicy) {
+
+    IJobKey jobKey = JobKeys.assertValid(IJobKey.build(mutableJobKey));
+    checkNotBlank(shardIds);
+
+    return storage.write(storeProvider -> {
+      try {
+        jobUpdateController.assertNotUpdating(jobKey);
+      } catch (JobUpdatingException e) {
+        return error(JOB_UPDATING_ERROR, e);
+      }
+
+      Query.Builder query = Query.instanceScoped(jobKey, shardIds).active();
+      Iterable<IScheduledTask> matchingTasks = storeProvider.getTaskStore().fetchTasks(query);
+      if (Iterables.size(matchingTasks) != shardIds.size()) {
+        return invalidRequest("Not all requested shards are active.");
+      }
+
+      LOG.info("Trying to restart shards matching " + query + " with " + slaPolicy);
+      for (IScheduledTask task : matchingTasks) {
+        slaManager.checkSlaThenAct(
+            task,
+            ISlaPolicy.build(slaPolicy),
+            store -> stateManager.changeState(
+                store,
+                Tasks.id(task),
+                Optional.empty(),
+                ScheduleStatus.RESTARTING,
+                auditMessages.restartedByRemoteUser()),
+            ImmutableMap.of(),
+            false);
+      }
+      slaRestartShardsCounter.addAndGet(shardIds.size());
 
       return ok();
     });

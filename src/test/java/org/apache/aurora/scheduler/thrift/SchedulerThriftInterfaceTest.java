@@ -87,10 +87,12 @@ import org.apache.aurora.scheduler.maintenance.MaintenanceController;
 import org.apache.aurora.scheduler.quota.QuotaCheckResult;
 import org.apache.aurora.scheduler.quota.QuotaManager;
 import org.apache.aurora.scheduler.reconciliation.TaskReconciler;
+import org.apache.aurora.scheduler.sla.SlaManager;
 import org.apache.aurora.scheduler.state.StateChangeResult;
 import org.apache.aurora.scheduler.state.StateManager;
 import org.apache.aurora.scheduler.state.UUIDGenerator;
 import org.apache.aurora.scheduler.storage.SnapshotStore;
+import org.apache.aurora.scheduler.storage.Storage;
 import org.apache.aurora.scheduler.storage.Storage.StorageException;
 import org.apache.aurora.scheduler.storage.backup.Recovery;
 import org.apache.aurora.scheduler.storage.backup.StorageBackup;
@@ -101,6 +103,7 @@ import org.apache.aurora.scheduler.storage.entities.IMetadata;
 import org.apache.aurora.scheduler.storage.entities.IRange;
 import org.apache.aurora.scheduler.storage.entities.IResourceAggregate;
 import org.apache.aurora.scheduler.storage.entities.IScheduledTask;
+import org.apache.aurora.scheduler.storage.entities.ISlaPolicy;
 import org.apache.aurora.scheduler.storage.entities.ITaskConfig;
 import org.apache.aurora.scheduler.storage.testing.StorageTestUtil;
 import org.apache.aurora.scheduler.testing.FakeStatsProvider;
@@ -161,6 +164,7 @@ import static org.apache.aurora.scheduler.thrift.SchedulerThriftInterface.NO_CRO
 import static org.apache.aurora.scheduler.thrift.SchedulerThriftInterface.PRUNE_TASKS;
 import static org.apache.aurora.scheduler.thrift.SchedulerThriftInterface.RESTART_SHARDS;
 import static org.apache.aurora.scheduler.thrift.SchedulerThriftInterface.SLA_DRAIN_HOSTS;
+import static org.apache.aurora.scheduler.thrift.SchedulerThriftInterface.SLA_RESTART_SHARDS;
 import static org.apache.aurora.scheduler.thrift.SchedulerThriftInterface.START_JOB_UPDATE;
 import static org.apache.aurora.scheduler.thrift.SchedulerThriftInterface.START_MAINTENANCE;
 import static org.apache.aurora.scheduler.thrift.SchedulerThriftInterface.jobAlreadyExistsMessage;
@@ -184,6 +188,8 @@ public class SchedulerThriftInterfaceTest extends EasyMockTest {
   private static final String EXECUTOR_NAME = apiConstants.AURORA_EXECUTOR_NAME;
   private static final ImmutableSet<Metadata> METADATA =
       ImmutableSet.of(new Metadata("k1", "v1"), new Metadata("k2", "v2"));
+  private static final SlaPolicy DEFAULT_SLA_POLICY = SlaPolicy.percentageSlaPolicy(
+      new PercentageSlaPolicy().setPercentage(95));
 
   private StorageTestUtil storageUtil;
   private SnapshotStore snapshotStore;
@@ -194,6 +200,7 @@ public class SchedulerThriftInterfaceTest extends EasyMockTest {
   private CronJobManager cronJobManager;
   private QuotaManager quotaManager;
   private StateManager stateManager;
+  private SlaManager slaManager;
   private UUIDGenerator uuidGenerator;
   private JobUpdateController jobUpdateController;
   private ReadOnlyScheduler.Iface readOnlyScheduler;
@@ -212,6 +219,7 @@ public class SchedulerThriftInterfaceTest extends EasyMockTest {
     cronJobManager = createMock(CronJobManager.class);
     quotaManager = createMock(QuotaManager.class);
     stateManager = createMock(StateManager.class);
+    slaManager = createMock(SlaManager.class);
     uuidGenerator = createMock(UUIDGenerator.class);
     jobUpdateController = createMock(JobUpdateController.class);
     readOnlyScheduler = createMock(ReadOnlyScheduler.Iface.class);
@@ -231,6 +239,7 @@ public class SchedulerThriftInterfaceTest extends EasyMockTest {
             maintenance,
             quotaManager,
             stateManager,
+            slaManager,
             uuidGenerator,
             jobUpdateController,
             readOnlyScheduler,
@@ -909,6 +918,58 @@ public class SchedulerThriftInterfaceTest extends EasyMockTest {
   }
 
   @Test
+  public void testSlaRestartShards() throws Exception {
+    Set<Integer> shards = ImmutableSet.of(0);
+    IScheduledTask task = buildScheduledTask();
+
+    jobUpdateController.assertNotUpdating(JOB_KEY);
+    storageUtil.expectTaskFetch(
+        Query.instanceScoped(JOB_KEY, shards).active(),
+        buildScheduledTask());
+    slaManager.checkSlaThenAct(
+        eq(task),
+        eq(ISlaPolicy.build(DEFAULT_SLA_POLICY)),
+        anyObject(Storage.MutateWork.class),
+        eq(ImmutableMap.of()),
+        eq(false));
+    control.replay();
+
+    assertOkResponse(
+        thrift.slaRestartShards(JOB_KEY.newBuilder(), shards, DEFAULT_SLA_POLICY));
+    assertEquals(1L, statsProvider.getLongValue(SLA_RESTART_SHARDS));
+  }
+
+  @Test
+  public void testSlaRestartShardsWhileJobUpdating() throws Exception {
+    Set<Integer> shards = ImmutableSet.of(1, 6);
+
+    jobUpdateController.assertNotUpdating(JOB_KEY);
+    expectLastCall().andThrow(new JobUpdatingException("job is updating"));
+
+    control.replay();
+
+    assertResponse(
+        JOB_UPDATING_ERROR,
+        thrift.slaRestartShards(JOB_KEY.newBuilder(), shards, DEFAULT_SLA_POLICY));
+    assertEquals(0L, statsProvider.getLongValue(KILL_TASKS));
+  }
+
+  @Test
+  public void testSlaRestartShardsNotFoundTasksFailure() throws Exception {
+    Set<Integer> shards = ImmutableSet.of(1, 6);
+
+    jobUpdateController.assertNotUpdating(JOB_KEY);
+    storageUtil.expectTaskFetch(Query.instanceScoped(JOB_KEY, shards).active());
+
+    control.replay();
+
+    assertResponse(
+        INVALID_REQUEST,
+        thrift.slaRestartShards(JOB_KEY.newBuilder(), shards, DEFAULT_SLA_POLICY));
+    assertEquals(0L, statsProvider.getLongValue(KILL_TASKS));
+  }
+
+  @Test
   public void testReplaceCronTemplate() throws Exception {
     jobUpdateController.assertNotUpdating(JOB_KEY);
     SanitizedConfiguration sanitized = fromUnsanitized(IJobConfiguration.build(CRON_JOB));
@@ -1115,15 +1176,14 @@ public class SchedulerThriftInterfaceTest extends EasyMockTest {
   @Test
   public void testSLAHostMaintenance() throws Exception {
     Set<String> hostnames = ImmutableSet.of("a");
-    SlaPolicy defaultSlaPolicy = SlaPolicy.percentageSlaPolicy(
-        new PercentageSlaPolicy().setPercentage(95));
+
     Set<IHostStatus> none = status("a", NONE);
     Set<IHostStatus> scheduled = status("a", SCHEDULED);
     Set<IHostStatus> draining = status("a", DRAINING);
     Set<IHostStatus> drained = status("a", DRAINING);
     expect(maintenance.getStatus(hostnames)).andReturn(none);
     expect(maintenance.startMaintenance(hostnames)).andReturn(scheduled);
-    expect(maintenance.slaDrain(hostnames, defaultSlaPolicy, 10)).andReturn(draining);
+    expect(maintenance.slaDrain(hostnames, DEFAULT_SLA_POLICY, 10)).andReturn(draining);
     expect(maintenance.getStatus(hostnames)).andReturn(draining);
     expect(maintenance.getStatus(hostnames)).andReturn(drained);
     expect(maintenance.endMaintenance(hostnames)).andReturn(none);
@@ -1144,7 +1204,7 @@ public class SchedulerThriftInterfaceTest extends EasyMockTest {
     assertEquals(1L, statsProvider.getLongValue(START_MAINTENANCE));
     assertEquals(
         IHostStatus.toBuildersSet(draining),
-        thrift.slaDrainHosts(hosts, defaultSlaPolicy, 10)
+        thrift.slaDrainHosts(hosts, DEFAULT_SLA_POLICY, 10)
             .getResult()
             .getDrainHostsResult()
             .getStatuses());

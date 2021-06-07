@@ -24,6 +24,7 @@ import org.apache.aurora.gen.JobKey;
 import org.apache.aurora.gen.JobUpdateKey;
 import org.apache.aurora.gen.JobUpdateRequest;
 import org.apache.aurora.gen.Response;
+import org.apache.aurora.gen.SlaPolicy;
 import org.apache.aurora.scheduler.http.api.security.AuthorizingParam;
 import org.apache.thrift.TException;
 
@@ -57,6 +58,12 @@ public interface AnnotatedAuroraAdmin extends AuroraAdmin.Iface {
   Response restartShards(
       @AuthorizingParam @Nullable JobKey job,
       @Nullable Set<Integer> shardIds) throws TException;
+
+  @Override
+  Response slaRestartShards(
+      @AuthorizingParam @Nullable JobKey job,
+      @Nullable Set<Integer> shardIds,
+      @Nullable SlaPolicy slaPolicy) throws TException;
 
   @Override
   Response killTasks(

@@ -256,6 +256,16 @@ public class MockDecoratedThrift implements AnnotatedAuroraAdmin {
   }
 
   @Override
+  public Response slaRestartShards(
+      @AuthorizingParam JobKey arg0,
+      Set<Integer> arg1,
+      SlaPolicy slaPolicy)
+      throws TException {
+
+    return this.annotatedAuroraAdmin.slaRestartShards(arg0, arg1, slaPolicy);
+  }
+
+  @Override
   public Response killTasks(@AuthorizingParam JobKey arg0, Set<Integer> arg1, String arg2)
       throws TException {
 
