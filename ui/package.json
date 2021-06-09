@@ -39,7 +39,7 @@
     "eslint-plugin-react": "7.24.0",
     "eslint-plugin-standard": "^5.0.0",
     "file-loader": "^6.0.0",
-    "jest": "^26.4.1",
+    "jest": "^27.0.4",
     "jest-cli": "^21.2.0",
     "react-test-renderer": "^17.0.1",
     "sass.js": "^0.11.1",
