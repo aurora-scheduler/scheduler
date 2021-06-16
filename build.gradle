@@ -198,7 +198,7 @@ project(':commons') {
     compile "javax.ws.rs:javax.ws.rs-api:${jaxRsRev}"
     compile "org.antlr:stringtemplate:${stringTemplateRev}"
     compile "org.apache.zookeeper:zookeeper:${zookeeperRev}"
-    compile "org.easymock:easymock:3.4"
+    compile "org.easymock:easymock:4.3"
 
     // There are a few testing support libs in the src/main/java trees that use junit - currently:
     //   src/main/java/org/apache/aurora/common/zookeeper/testing
