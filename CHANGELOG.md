@@ -1,3 +1,45 @@
+Aurora Scheduler 0.24.2
+--------------------------------------------------------------------------------
+## Pull Requests
+* [#132](https://github.com/aurora-scheduler/scheduler/pull/132) - Bump shiroRev from 1.4.0 to 1.7.0
+* [#135](https://github.com/aurora-scheduler/scheduler/pull/135) - Bump protobuf-java from 3.5.1 to 3.14.0
+* [#136](https://github.com/aurora-scheduler/scheduler/pull/136) - Bump eslint-plugin-react from 7.21.5 to 7.22.0 in /ui
+* [#137](https://github.com/aurora-scheduler/scheduler/pull/137) - Update Vagrant box reference
+* [#141](https://github.com/aurora-scheduler/scheduler/pull/141) - Bump httpcore from 4.4.13 to 4.4.14
+* [#146](https://github.com/aurora-scheduler/scheduler/pull/146) - Bump objenesis from 2.2 to 3.1
+* [#147](https://github.com/aurora-scheduler/scheduler/pull/147) - Bump jacksonRev from 2.12.0 to 2.12.1
+* [#148](https://github.com/aurora-scheduler/scheduler/pull/148) - Bump shiroRev from 1.7.0 to 1.7.1
+* [#149](https://github.com/aurora-scheduler/scheduler/pull/149) - Pants upgrade to 1.26
+* [#150](https://github.com/aurora-scheduler/scheduler/pull/150) - Bump com.github.node-gradle.node from 2.2.4 to 3.0.1
+* [#151](https://github.com/aurora-scheduler/scheduler/pull/151) - Bump me.champeau.gradle.jmh from 0.5.2 to 0.5.3
+* [#153](https://github.com/aurora-scheduler/scheduler/pull/153) - Bump react from 16.14.0 to 17.0.1 in /ui
+* [#156](https://github.com/aurora-scheduler/scheduler/pull/156) - Bump bootstrap from 3.4.1 to 4.6.0 in /ui
+* [#158](https://github.com/aurora-scheduler/scheduler/pull/158) - Bump com.github.spotbugs from 4.6.0 to 4.6.2
+* [#159](https://github.com/aurora-scheduler/scheduler/pull/159) - Bump protobuf-java from 3.14.0 to 3.15.2
+* [#160](https://github.com/aurora-scheduler/scheduler/pull/160) - Bump junit from 4.12 to 4.13.2
+* [#164](https://github.com/aurora-scheduler/scheduler/pull/164) - Bump ajv from 6.12.6 to 7.1.1 in /ui
+* [#165](https://github.com/aurora-scheduler/scheduler/pull/165) - Bump react-test-renderer from 16.14.0 to 17.0.1 in /ui
+* [#167](https://github.com/aurora-scheduler/scheduler/pull/167) - Bump ajv-keywords from 3.5.2 to 4.0.0 in /ui
+* [#168](https://github.com/aurora-scheduler/scheduler/pull/168) - Bump react-dom from 16.14.0 to 17.0.1 in /ui
+* [#169](https://github.com/aurora-scheduler/scheduler/pull/169) - Bump commons-lang3 from 3.11 to 3.12.0
+* [#171](https://github.com/aurora-scheduler/scheduler/pull/171) - Bump protobuf-java from 3.15.2 to 3.15.3
+* [#177](https://github.com/aurora-scheduler/scheduler/pull/177) - Bump jacksonRev from 2.12.1 to 2.12.2
+* [#181](https://github.com/aurora-scheduler/scheduler/pull/181) - Bump protobuf-java from 3.15.3 to 3.15.6
+* [#187](https://github.com/aurora-scheduler/scheduler/pull/187) - Bump jcommander from 1.78 to 1.81
+* [#189](https://github.com/aurora-scheduler/scheduler/pull/189) - Bump com.github.ben-manes.versions from 0.36.0 to 0.38.0
+* [#191](https://github.com/aurora-scheduler/scheduler/pull/191) - Bump eslint-plugin-react from 7.22.0 to 7.23.1 in /ui
+* [#193](https://github.com/aurora-scheduler/scheduler/pull/193) - Bump objenesis from 3.1 to 3.2
+* [#200](https://github.com/aurora-scheduler/scheduler/pull/200) - Bump eslint-plugin-promise from 4.3.1 to 5.1.0 in /ui
+* [#211](https://github.com/aurora-scheduler/scheduler/pull/211) - Bump bootstrap from 4.6.0 to 5.0.0 in /ui
+* [#213](https://github.com/aurora-scheduler/scheduler/pull/213) - Bump eslint-plugin-chai-friendly from 0.6.0 to 0.7.1 in /ui
+* [#214](https://github.com/aurora-scheduler/scheduler/pull/214) - Improve HttpOfferSet performance
+* [#216](https://github.com/aurora-scheduler/scheduler/pull/216) - Disable pauses for auto pause enabled updates
+* [#221](https://github.com/aurora-scheduler/scheduler/pull/221) - Bump eslint-plugin-react from 7.23.1 to 7.24.0 in /ui
+* [#223](https://github.com/aurora-scheduler/scheduler/pull/223) - Bump jest from 26.6.3 to 27.0.4 in /ui
+* [#230](https://github.com/aurora-scheduler/scheduler/pull/230) - Bump com.github.node-gradle.node from 3.0.1 to 3.1.0
+* [#231](https://github.com/aurora-scheduler/scheduler/pull/231) - Bump com.github.ben-manes.versions from 0.38.0 to 0.39.0
+* [#235](https://github.com/aurora-scheduler/scheduler/pull/235) - Release update
+
 Aurora Scheduler 0.24.0
 --------------------------------------------------------------------------------
 ## Pull Requests
