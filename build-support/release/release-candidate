@@ -228,10 +228,10 @@ gh api graphql \
 -F name='aurora' \
 -f query="$graphql_query" | python3 ./build-support/release/changelog.py $current_version > CHANGELOG.tmp
 
-cat CHANGELOG >> CHANGELOG.tmp && mv CHANGELOG.tmp CHANGELOG
+cat CHANGELOG.md >> CHANGELOG.tmp && mv CHANGELOG.tmp CHANGELOG.md
 
-git add CHANGELOG
-git commit -m "Updating CHANGELOG for ${current_version} release."
+git add CHANGELOG.md
+git commit -m "Updating CHANGELOG.md for ${current_version} release."
 
 echo "Committing updated .auroraversion on master"
 echo $new_snapshot_version > .auroraversion
@@ -313,7 +313,7 @@ The RELEASE NOTES for the release are available at:
 ${aurora_git_web_url}/blob/${rc_version_tag}/RELEASE-NOTES.md
 
 The CHANGELOG for the release is available at:
-${aurora_git_web_url}/blob/${rc_version_tag}/CHANGELOG
+${aurora_git_web_url}/blob/${rc_version_tag}/CHANGELOG.md
 
 The tag used to create the release candidate is:
 ${aurora_git_web_url}/tree/${rc_version_tag}
