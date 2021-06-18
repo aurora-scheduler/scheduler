@@ -228,7 +228,8 @@ gh api graphql \
 -F name='aurora' \
 -f query="$graphql_query" | python3 ./build-support/release/changelog.py $current_version > CHANGELOG.tmp
 
-cat CHANGELOG >> CHANGELOG.tmp && mv CHANGELOG.tmp CHANGELOG
+#cat CHANGELOG >> CHANGELOG.tmp && mv CHANGELOG.tmp CHANGELOG
+mv CHANGELOG.tmp CHANGELOG
 
 git add CHANGELOG
 git commit -m "Updating CHANGELOG for ${current_version} release."
