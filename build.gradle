@@ -88,7 +88,7 @@ For more details, please see https://issues.apache.org/jira/browse/AURORA-1169
   ext.jacksonRev = '2.12.4'
   ext.jaxRsRev = '2.0'
   ext.junitRev = '4.13.2'
-  ext.logbackRev = '1.2.3'
+  ext.logbackRev = '1.2.5'
   ext.nettyRev = '4.0.52.Final'
   ext.protobufRev = '3.17.3'
   ext.resteasyRev = '3.1.4.Final'
