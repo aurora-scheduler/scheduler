@@ -1,3 +1,11 @@
+Aurora Scheduler 0.25.0
+--------------------------------------------------------------------------------
+## Pull Requests
+* [#233](https://github.com/aurora-scheduler/scheduler/pull/233) - Bump protobuf-java from 3.15.6 to 3.17.3
+* [#241](https://github.com/aurora-scheduler/scheduler/pull/241) - Bump query-string from 6.14.1 to 7.0.1 in /ui
+* [#249](https://github.com/aurora-scheduler/scheduler/pull/249) - Revert "Disable pauses for auto pause enabled updates (#216)"
+* [#251](https://github.com/aurora-scheduler/scheduler/pull/251) - Bump slf4j-api from 1.7.30 to 1.7.31
+
 Aurora Scheduler 0.24.2
 --------------------------------------------------------------------------------
 ## Pull Requests
@@ -38,6 +46,7 @@ Aurora Scheduler 0.24.2
 * [#223](https://github.com/aurora-scheduler/scheduler/pull/223) - Bump jest from 26.6.3 to 27.0.4 in /ui
 * [#230](https://github.com/aurora-scheduler/scheduler/pull/230) - Bump com.github.node-gradle.node from 3.0.1 to 3.1.0
 * [#231](https://github.com/aurora-scheduler/scheduler/pull/231) - Bump com.github.ben-manes.versions from 0.38.0 to 0.39.0
+* [#235](https://github.com/aurora-scheduler/scheduler/pull/235) - Release update
 
 Aurora Scheduler 0.24.0
 --------------------------------------------------------------------------------

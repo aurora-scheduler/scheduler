@@ -1,105 +1,78 @@
 Committer's Guide
 =================
 
-Information for official Apache Aurora committers.
-
-Setting up your email account
------------------------------
-Once your Apache ID has been set up you can configure your account and add ssh keys and setup an
-email forwarding address at
-
-    http://id.apache.org
-
-Additional instructions for setting up your new committer email can be found at
-
-    http://www.apache.org/dev/user-email.html
-
-The recommended setup is to configure all services (mailing lists, JIRA, ReviewBoard) to send
-emails to your @apache.org email address.
-
+Information for Aurora Scheduler committers.
 
 Creating a gpg key for releases
 -------------------------------
-In order to create a release candidate you will need a gpg key published to an external key server
-and that key will need to be added to our KEYS file as well.
+Releases are signed with keys that can be found in the KEYS file.
+If a developer already has a GPG key, they may manually add it to the
+KEYS file and submit a pull request.
 
-1. Create a key:
+Developers who do not yet have a GPG key or wish to create a new one
+can :
+
+1. Fork project on Github.
+
+2. Create a key:
 
                gpg --gen-key
 
-2. Add your gpg key to the Apache Aurora KEYS file:
+3. Add your gpg key to the Aurora KEYS file:
 
-               git clone https://gitbox.apache.org/repos/asf/aurora
+               git checkout -b addGPGKey
                (gpg --list-sigs <KEY ID> && gpg --armor --export <KEY ID>) >> KEYS
-               git add KEYS && git commit -m "Adding gpg key for <APACHE ID>"
-               ./rbt post -o -g
+               git add KEYS && git commit -m "Adding gpg key for <GITHUB ID>"
 
-3. Publish the key to an external key server:
+4. Send a Pull Request adding your new key.
+
+5. Publish the key to an external key server:
 
                gpg --keyserver pgp.mit.edu --send-keys <KEY ID>
 
-4. Update the changes to the KEYS file to the Apache Aurora svn dist locations listed below:
-
-               https://dist.apache.org/repos/dist/dev/aurora/KEYS
-               https://dist.apache.org/repos/dist/release/aurora/KEYS
-
-5. Add your key to git config for use with the release scripts:
+6. Add your key to git config for use with the release scripts:
 
                git config --global user.signingkey <KEY ID>
 
 
 Creating a release
 ------------------
-The following will guide you through the steps to create a release candidate, vote, and finally an
-official Apache Aurora release. Before starting your gpg key should be in the KEYS file and you
-must have access to commit to the dist.a.o repositories.
+The following will guide you through the steps to create a release candidate and an
+official Aurora Scheduler release. Before starting your gpg key should be in the KEYS file.
 
-1. Ensure that all issues resolved for this release candidate are tagged with the correct Fix
-Version in JIRA, the changelog script will use this to generate the CHANGELOG in step #2.
-To assign the fix version:
+1. Ensure that all merged pull requests for this release candidate are tagged with the correct version,
+the changelog script will use this to generate the CHANGELOG in step #2.
+Merged pull requests can be found [here](https://github.com/aurora-scheduler/aurora/pulls?q=is%3Apr+is%3Amerged+).
 
-    * Look up the [previous release date](https://issues.apache.org/jira/browse/aurora/?selectedTab=com.atlassian.jira.jira-projects-plugin:versions-panel).
-    * Query all issues resolved after that release date: `project = AURORA AND status in (resolved, Closed) and fixVersion is empty and resolutiondate >= "YYYY/MM/DD"`
-    * In the upper right corner of the query result, select Tools > Bulk Edit.
-    * Select all issues > edit issue > set 'Change Fix Version/s' to the release version.
-    * Make sure to uncheck 'Send mail for this update' at the bottom.
 
 2. Prepare RELEASE-NOTES.md for the release. This just boils down to removing the "(Not yet
 released)" suffix from the impending release.
 
-2. Create a release candidate. This will automatically update the CHANGELOG and commit it, create a
+3. Create a release candidate. This will automatically update the CHANGELOG and commit it, create a
 branch and update the current version within the trunk. To create a minor version update and publish
 it run
 
                ./build-support/release/release-candidate -l m -p
 
-3. Update, if necessary, the draft email created from the `release-candidate` script in step #2 and
-send the [VOTE] email to the dev@ mailing list. You can verify the release signature and checksums
-by running
+4. Update, if necessary, the release draft message created from the `release-candidate` script in step #2 and
+[draft a new release](https://github.com/aurora-scheduler/aurora/releases/new) on Github. Make sure the
+checkbox next to `This is a pre-release` is checked.
+
+You can verify the release signature and checksums by running
 
                ./build-support/release/verify-release-candidate
 
-4. Wait for the vote to complete. If the vote fails close the vote by replying to the initial [VOTE]
-email sent in step #3 by editing the subject to [RESULT][VOTE] ... and noting the failure reason
-(example [here](http://markmail.org/message/d4d6xtvj7vgwi76f)). You'll also need to manually revert
-the commits generated by the release candidate script that incremented the snapshot version and
+5. Test the release for a few days and wait for community feedback. If bugs crop up, you'll also need 
+to manually revert the commits generated by the release candidate script that incremented the snapshot version and
 updated the changelog. Once that is done, now address any issues and go back to step #1 and run
 again, this time you will use the -r flag to increment the release candidate version. This will
 automatically clean up the release candidate rc0 branch and source distribution.
 
                ./build-support/release/release-candidate -l m -r 1 -p
 
-5. Once the vote has successfully passed create the release
-
-**IMPORTANT: make sure to use the correct release at this final step (e.g.: `-r 1` if rc1 candidate
-has been voted for). Once the release tag is pushed it will be very hard to undo due to remote
-git pre-receive hook explicitly forbidding release tag manipulations.**
+6. Once you feel comfortable releasing the final version run:
 
                ./build-support/release/release
 
-6. Update the draft email created fom the `release` script in step #5 to include the Apache ID's for
-all binding votes and send the [RESULT][VOTE] email to the dev@ mailing list.
-
-7. Update the [Aurora Website](http://aurora.apache.org/) by following the
-[instructions](https://svn.apache.org/repos/asf/aurora/site/README.md) on the ASF Aurora SVN repo.
-Remember to add a blog post under source/blog and regenerate the site before committing.
+7. Update the draft message created fom the `release` script in step #5 and tag all the contributors for this
+release where possible.

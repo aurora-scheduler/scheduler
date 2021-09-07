@@ -1,3 +1,20 @@
+0.25.0
+======
+
+### New/updated:
+- Revert "Disabled pauses for auto pause enabled updates" in 0.24.2
+- Several project dependencies have been upgraded. See CHANGELOG for more information.
+
+0.24.2
+======
+
+### New/updated:
+- Disabled pauses for auto pause enabled updates
+- Improved HttpOfferSet performance
+- Pants version bumped up to 1.26.0
+- update release docs
+- Several project dependencies have been upgraded. See CHANGELOG for more information.
+
 0.24.0
 ======
 

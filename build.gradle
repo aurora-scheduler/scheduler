@@ -17,7 +17,7 @@ plugins {
   id 'com.github.hierynomus.license' version '0.15.0'
   id "com.github.node-gradle.node" version "3.1.0"
   id 'me.champeau.gradle.jmh' version '0.5.3'
-  id "com.github.spotbugs" version "4.6.2"
+  id "com.github.spotbugs" version "4.7.3"
 }
 
 apply plugin: 'application'
@@ -85,18 +85,18 @@ For more details, please see https://issues.apache.org/jira/browse/AURORA-1169
   ext.httpclientRev = '4.5.13'
   ext.httpcoreRev = '4.4.14'
   ext.asyncHttpclientRev = '2.0.37'
-  ext.jacksonRev = '2.12.2'
+  ext.jacksonRev = '2.12.5'
   ext.jaxRsRev = '2.0'
   ext.junitRev = '4.13.2'
-  ext.logbackRev = '1.2.3'
+  ext.logbackRev = '1.2.5'
   ext.nettyRev = '4.0.52.Final'
-  ext.protobufRev = '3.15.6'
+  ext.protobufRev = '3.17.3'
   ext.resteasyRev = '3.1.4.Final'
   ext.servletRev = '3.1.0'
-  ext.slf4jRev = '1.7.30'
+  ext.slf4jRev = '1.7.32'
   ext.stringTemplateRev = '3.2.1'
   ext.thriftRev = '0.10.0'
-  ext.zookeeperRev = '3.4.8'
+  ext.zookeeperRev = '3.4.14'
 
   configurations.all {
     exclude module: 'junit-dep'
@@ -366,7 +366,7 @@ sourceSets {
 }
 
 dependencies {
-  def shiroRev = '1.7.1'
+  def shiroRev = '1.8.0'
   def jettyDep = '9.3.11.v20160721'
 
   compile project(':api')
