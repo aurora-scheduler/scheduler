@@ -280,6 +280,11 @@ public class FakeMaster implements SchedulerDriver, DriverFactory {
   }
 
   @Override
+  public Status reviveOffers(Collection<String> roles) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
   public Status acknowledgeStatusUpdate(TaskStatus status) {
     assertNotStopped();
     throw new UnsupportedOperationException();
@@ -296,6 +301,11 @@ public class FakeMaster implements SchedulerDriver, DriverFactory {
   }
 
   @Override
+  public Status updateFramework(org.apache.mesos.Protos.FrameworkInfo frameworkInfo, Collection<String> suppressedRoles) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
   public Status acceptOffers(
       Collection<OfferID> offerIds,
       Collection<Offer.Operation> operations,
@@ -305,6 +315,11 @@ public class FakeMaster implements SchedulerDriver, DriverFactory {
 
   @Override
   public Status suppressOffers() {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public Status suppressOffers(Collection<String> roles) {
     throw new UnsupportedOperationException();
   }
 
