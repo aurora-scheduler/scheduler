@@ -16,6 +16,7 @@ package org.apache.aurora.benchmark.fakes;
 import java.util.Collection;
 
 import org.apache.mesos.Protos;
+import org.apache.mesos.Protos.FrameworkInfo;
 import org.apache.mesos.Protos.Status;
 import org.apache.mesos.SchedulerDriver;
 
@@ -139,6 +140,21 @@ public class FakeSchedulerDriver implements SchedulerDriver {
 
   @Override
   public Status suppressOffers() {
+    return null;
+  }
+
+  @Override
+  public Status reviveOffers(Collection<String> roles) {
+    return null;
+  }
+
+  @Override
+  public Status updateFramework(FrameworkInfo frameworkInfo, Collection<String> suppressedRoles) {
+    return null;
+  }
+
+  @Override
+  public Status suppressOffers(Collection<String> roles) {
     return null;
   }
 }
