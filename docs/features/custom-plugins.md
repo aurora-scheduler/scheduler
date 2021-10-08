@@ -91,5 +91,5 @@ The chance is computed by `(priority + 1)^probabilistic_priority_assigner_expone
 For example, there are pending tasks with 2 priorities `{0, 1}`. 
 - If `probabilistic_priority_assigner_exponent=1.0`, the chance of `0` is `1` while the chance of `1` is `2`.
 - If `probabilistic_priority_assigner_exponent=3.0`, the chance of `0` is `1` while the chance of `1` is `8`.
-- If `probabilistic_priority_assigner_exponent=0.0`, the chance of `0` is `1` while the chance of `1` is `0`. 
+- If `probabilistic_priority_assigner_exponent=0.0`, the chance of `0` is `1` while the chance of `1` is `1`. 
 In this case, `probabilistic priority queueing` behaves like the default `TaskAssigner`.
