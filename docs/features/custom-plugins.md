@@ -9,10 +9,10 @@ By default, Aurora does not sort or filter OfferSet.
 We can customize the offerset that changes the behavior of the scheduler.
 For example, we can spread out the load by sorting the offers.
 
+#### HTTP OfferSet
 One of the limitations of this approach is that you need to develop your own OfferSet implementation and compile it with Apache Aurora.
 To make OfferSet plugin more flexible, we proposed HTTP OfferSet that allows us to sorts or filters the offers externally via http.
 
-* HTTP OfferSet
 We added HTTP OfferSet `io.github.aurora.scheduler.offers.HttpOfferSetModule` that allows Aurora to talk to an external REST API server.
 
 How to configure HTTP OfferSet?
@@ -68,3 +68,28 @@ We can monitor this plugin by looking at the endpoint `/vars`. The following met
 - `http_offer_set_max_diff`: The number of different offers between the original `OfferSet` and the received one.
 
 HTTP OfferSet resets the above metrics every `sla_stat_refresh_interval`.
+
+TaskAssigner
+--------
+TaskAssigner is the plugin module that allows us to match a group of tasks to a set of offers.
+By default, `org.apache.aurora.scheduler.scheduling.TaskAssignerImplModule` does matching in a FIFO manner.
+We can take advantage of TaskAssigner when there is additional requirement.
+
+#### Probabilistic priority queueing
+Even though there is `priority` in `TaskConfig`, aurora-scheduler does not support priority queueing. 
+`priority` is mainly used for `preemption`.
+When tasks are pending for scheduling, we can prioritize the `tasks` with higher priorities. 
+In this approach, we do not offer hard priority queueing that strictly blocks lower priority tasks from being scheduled.
+Instead, we offer more chance to the higher priority tasks to be scheduled, called `probabilistic priority queueing`.
+
+To enable `probabilistic priority queueing`, you need to set the following parameters
+- `task_assigner_modules=io.github.aurora.scheduler.scheduling.ProbabilisticPriorityAssignerModule`
+- `probabilistic_priority_assigner_exponent=[non-negative double like 1.0]`
+
+`probabilistic_priority_assigner_exponent` controls the chance you want to prioritize the high priority tasks.
+The chance is computed by `(priority + 1)^probabilistic_priority_assigner_exponent`
+For example, there are pending tasks with 2 priorities `{0, 1}`. 
+- If `probabilistic_priority_assigner_exponent=1.0`, the chance of `0` is `1` while the chance of `1` is `2`.
+- If `probabilistic_priority_assigner_exponent=3.0`, the chance of `0` is `1` while the chance of `1` is `8`.
+- If `probabilistic_priority_assigner_exponent=0.0`, the chance of `0` is `1` while the chance of `1` is `0`. 
+In this case, `probabilistic priority queueing` behaves like the default `TaskAssigner`.
