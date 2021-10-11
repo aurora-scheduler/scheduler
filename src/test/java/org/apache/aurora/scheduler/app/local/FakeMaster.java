@@ -39,6 +39,7 @@ import org.apache.aurora.scheduler.mesos.DriverFactory;
 import org.apache.mesos.Protos.ExecutorID;
 import org.apache.mesos.Protos.Filters;
 import org.apache.mesos.Protos.FrameworkID;
+import org.apache.mesos.Protos.FrameworkInfo;
 import org.apache.mesos.Protos.MasterInfo;
 import org.apache.mesos.Protos.Offer;
 import org.apache.mesos.Protos.OfferID;
@@ -301,7 +302,7 @@ public class FakeMaster implements SchedulerDriver, DriverFactory {
   }
 
   @Override
-  public Status updateFramework(org.apache.mesos.Protos.FrameworkInfo frameworkInfo, Collection<String> suppressedRoles) {
+  public Status updateFramework(FrameworkInfo frameworkInfo, Collection<String> suppressedRoles) {
     throw new UnsupportedOperationException();
   }
 
