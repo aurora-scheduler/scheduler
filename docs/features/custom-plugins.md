@@ -77,19 +77,24 @@ We can take advantage of TaskAssigner when there is additional requirement.
 
 #### Probabilistic priority queueing
 Even though there is `priority` in `TaskConfig`, aurora-scheduler does not support priority queueing. 
-`priority` is mainly used for `preemption`.
-When tasks are pending for scheduling, we can prioritize the `tasks` with higher priorities. 
+`priority` is mainly used for `preemption` which applied to the tasks after `TASK_ASSIGNED`.
+When jobs (or services) are pending for scheduling, we can prioritize the `jobs` with higher priorities. 
 In this approach, we do not offer hard priority queueing that strictly blocks lower priority tasks from being scheduled.
-Instead, we offer more chance to the higher priority tasks to be scheduled, called `probabilistic priority queueing`.
+Instead, we offer less chance to the low priority jobs and more chance for the high priority jobs to be scheduled, called `probabilistic priority queueing`.
 
 To enable `probabilistic priority queueing`, you need to set the following parameters
 - `task_assigner_modules=io.github.aurora.scheduler.scheduling.ProbabilisticPriorityAssignerModule`
 - `probabilistic_priority_assigner_exponent=[non-negative double like 1.0]`
 
-`probabilistic_priority_assigner_exponent` controls the chance you want to prioritize the high priority tasks.
-The chance is computed by `(priority + 1)^probabilistic_priority_assigner_exponent`
-For example, there are pending tasks with 2 priorities `{0, 1}`. 
-- If `probabilistic_priority_assigner_exponent=1.0`, the chance of `0` is `1` while the chance of `1` is `2`.
+`io.github.aurora.scheduler.scheduling.ProbabilisticPriorityAssignerModule` is the plugin module while 
+`probabilistic_priority_assigner_exponent` is its control parameter.
+The non-negative chance of scheduling a task with `priority` is computed by `(priority + 1)^probabilistic_priority_assigner_exponent`. 
+For example, there are `N` pending jobs with 2 priorities `{0, 1}`. How does the `chance` impact on scheduling these jobs?  
+
+- If `probabilistic_priority_assigner_exponent=1.0`, the chance of `0` is `1` while the chance of `1` is `2`. 
+If the scheduler has to schedule 900 jobs first from the queue, it likely schedules 600 jobs with `priority=1` and 300 jobs with `priority=0`. 
 - If `probabilistic_priority_assigner_exponent=3.0`, the chance of `0` is `1` while the chance of `1` is `8`.
+If the scheduler has to schedule 900 jobs first from the queue, it likely schedules 800 jobs with `priority=1` and 100 jobs with `priority=0`.
 - If `probabilistic_priority_assigner_exponent=0.0`, the chance of `0` is `1` while the chance of `1` is `1`. 
+If the scheduler has to schedule 900 jobs first from the queue, it likely schedules 450 jobs with `priority=1` and 450 jobs with `priority=0`.
 In this case, `probabilistic priority queueing` behaves like the default `TaskAssigner`.
