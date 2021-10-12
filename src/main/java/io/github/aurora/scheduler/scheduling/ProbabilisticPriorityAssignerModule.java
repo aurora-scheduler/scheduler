@@ -47,9 +47,8 @@ public class ProbabilisticPriorityAssignerModule extends AbstractModule {
   @Override
   protected void configure() {
     bind(Double.class)
-        .annotatedWith(ProbabilisticPriorityAssignerImpl.Exponent.class)
+        .annotatedWith(ProbabilisticPriorityAssigner.Exponent.class)
         .toInstance(options.probabilisticPriorityAssignerExponent);
-    bind(TaskAssigner.class).to(ProbabilisticPriorityAssignerImpl.class);
-    bind(ProbabilisticPriorityAssignerImpl.class).in(Singleton.class);
+    bind(TaskAssigner.class).to(ProbabilisticPriorityAssigner.class).in(Singleton.class);
   }
 }
