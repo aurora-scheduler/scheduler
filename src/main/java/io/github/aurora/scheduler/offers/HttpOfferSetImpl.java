@@ -27,7 +27,6 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 
 import javax.annotation.Nonnull;
 import javax.inject.Qualifier;
@@ -195,12 +194,14 @@ public class HttpOfferSetImpl implements OfferSet {
     List<HostOffer> goodOffers = new ArrayList<>();
     if (maxStartingTasksPerSlave > 0) {
       badOffers =  offers.stream()
-          .filter(offer -> hostTaskCountMap.getOrDefault(offer.getOffer().getAgentId().getValue(), 0)
-              >= maxStartingTasksPerSlave)
+          .filter(offer ->
+              hostTaskCountMap.getOrDefault(offer.getOffer().getAgentId().getValue(), 0)
+                  >= maxStartingTasksPerSlave)
           .collect(Collectors.toList());
       goodOffers =  offers.stream()
-          .filter(offer -> hostTaskCountMap.getOrDefault(offer.getOffer().getAgentId().getValue(), 0)
-              < maxStartingTasksPerSlave)
+          .filter(offer ->
+              hostTaskCountMap.getOrDefault(offer.getOffer().getAgentId().getValue(), 0)
+                  < maxStartingTasksPerSlave)
           .collect(Collectors.toList());
 
       if (!badOffers.isEmpty()) {
