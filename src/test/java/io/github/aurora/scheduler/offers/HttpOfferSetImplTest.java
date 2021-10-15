@@ -14,19 +14,35 @@
 package io.github.aurora.scheduler.offers;
 
 import java.io.IOException;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterables;
+
 import org.apache.aurora.common.testing.easymock.EasyMockTest;
+import org.apache.aurora.gen.AssignedTask;
 import org.apache.aurora.gen.HostAttributes;
+import org.apache.aurora.gen.ScheduleStatus;
+import org.apache.aurora.gen.ScheduledTask;
+import org.apache.aurora.scheduler.base.TaskGroupKey;
+import org.apache.aurora.scheduler.base.TaskTestUtil;
 import org.apache.aurora.scheduler.offers.HostOffer;
 import org.apache.aurora.scheduler.offers.Offers;
+import org.apache.aurora.scheduler.storage.Storage;
 import org.apache.aurora.scheduler.storage.entities.IHostAttributes;
+import org.apache.aurora.scheduler.storage.entities.IScheduledTask;
+import org.apache.aurora.scheduler.storage.mem.MemStorageModule;
 import org.junit.Before;
 import org.junit.Test;
 
 import static org.apache.aurora.gen.MaintenanceMode.NONE;
+import static org.apache.aurora.scheduler.base.TaskTestUtil.JOB;
+import static org.apache.aurora.scheduler.base.TaskTestUtil.makeTask;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -54,7 +70,42 @@ public class HttpOfferSetImplTest extends EasyMockTest {
 
   @Before
   public void setUp() throws IOException {
-    httpOfferSet = new HttpOfferSetImpl(new HashSet<>());
+    Storage storage = MemStorageModule.newEmptyStorage();
+    storage.write((Storage.MutateWork.NoResult.Quiet) sp -> {
+      ScheduledTask t0 = makeTask("t0", JOB)
+          .newBuilder()
+          .setStatus(ScheduleStatus.PENDING);
+
+      ScheduledTask t1 = makeTask("t1", JOB)
+          .newBuilder()
+          .setStatus(ScheduleStatus.STARTING);
+      t1.setAssignedTask(new AssignedTask("t1",
+              OFFER_B.getOffer().getAgentId().getValue(),
+              OFFER_B.getOffer().getHostname(),
+              t1.getAssignedTask().getTask(),
+              new HashMap<>(),
+              0));
+
+      ScheduledTask t2 = makeTask("t2", JOB)
+          .newBuilder()
+          .setStatus(ScheduleStatus.RUNNING);
+      t2.setAssignedTask(new AssignedTask("t2",
+          OFFER_C.getOffer().getAgentId().getValue(),
+          OFFER_C.getOffer().getHostname(),
+          t1.getAssignedTask().getTask(),
+          new HashMap<>(),
+          0));
+
+      sp.getUnsafeTaskStore().saveTasks(
+          IScheduledTask.setFromBuilders(ImmutableList.of(t0, t1, t2)));
+    });
+
+    httpOfferSet = new HttpOfferSetImpl(new HashSet<>(),
+        storage,
+        0,
+        new URL("http://localhost:9090/v1/offerset"),
+        0,
+        1);
     httpOfferSet.add(OFFER_A);
     httpOfferSet.add(OFFER_B);
     httpOfferSet.add(OFFER_C);
@@ -139,5 +190,26 @@ public class HttpOfferSetImplTest extends EasyMockTest {
       isException = true;
     }
     assertTrue(isException);
+  }
+
+  @Test
+  public void testGetOrdered() {
+    control.replay();
+
+    // OFFER_B is put in the bottom of list as it has 1 starting task.
+    IScheduledTask task = makeTask("id", JOB);
+    Iterable<HostOffer> sortedOffers = httpOfferSet.getOrdered(
+        TaskGroupKey.from(task.getAssignedTask().getTask()),
+        TaskTestUtil.toResourceRequest(task.getAssignedTask().getTask()));
+
+    List<HostOffer> expectedOffers = new ArrayList<>();
+    expectedOffers.add(OFFER_A);
+    expectedOffers.add(OFFER_C);
+    expectedOffers.add(OFFER_B);
+    assertEquals(expectedOffers.size(), Iterables.size(sortedOffers));
+    int i = 0;
+    for (HostOffer o: sortedOffers) {
+      assertEquals(expectedOffers.get(i++), o);
+    }
   }
 }

@@ -90,6 +90,12 @@ public class HttpOfferSetModule extends AbstractModule {
 
     @Parameter(names = "-http_offer_set_max_retries")
     int httpOfferSetMaxRetries = 10;
+
+    // the slaves have more than or equal to the httpOfferSetMaxStartingTasksPerSlave
+    // are put in the bottom of the offerset. If you want to enable this feature, set
+    // httpOfferSetMaxStartingTasksPerSlave less than or equal to zero
+    @Parameter(names = "-http_offer_set_max_starting_tasks_per_slave")
+    int httpOfferSetMaxStartingTasksPerSlave = 0;
   }
 
   static {
@@ -119,6 +125,9 @@ public class HttpOfferSetModule extends AbstractModule {
         bind(Integer.class)
                 .annotatedWith(HttpOfferSetImpl.MaxRetries.class)
                 .toInstance(options.httpOfferSetMaxRetries);
+        bind(Integer.class)
+            .annotatedWith(HttpOfferSetImpl.MaxStartingTaskPerSlave.class)
+            .toInstance(options.httpOfferSetMaxStartingTasksPerSlave);
         bind(OfferSet.class).to(HttpOfferSetImpl.class).in(Singleton.class);
         expose(OfferSet.class);
       }
