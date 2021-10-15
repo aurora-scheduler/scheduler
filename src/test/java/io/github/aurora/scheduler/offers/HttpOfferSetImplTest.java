@@ -202,14 +202,11 @@ public class HttpOfferSetImplTest extends EasyMockTest {
         TaskGroupKey.from(task.getAssignedTask().getTask()),
         TaskTestUtil.toResourceRequest(task.getAssignedTask().getTask()));
 
-    List<HostOffer> expectedOffers = new ArrayList<>();
-    expectedOffers.add(OFFER_A);
-    expectedOffers.add(OFFER_C);
-    expectedOffers.add(OFFER_B);
-    assertEquals(expectedOffers.size(), Iterables.size(sortedOffers));
-    int i = 0;
+    assertEquals(3, Iterables.size(sortedOffers));
+    HostOffer lastOffer = null;
     for (HostOffer o: sortedOffers) {
-      assertEquals(expectedOffers.get(i++), o);
+      lastOffer = o;
     }
+    assertEquals(OFFER_B, lastOffer);
   }
 }
