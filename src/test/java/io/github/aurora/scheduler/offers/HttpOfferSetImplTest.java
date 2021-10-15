@@ -30,6 +30,7 @@ import org.apache.aurora.gen.ScheduleStatus;
 import org.apache.aurora.gen.ScheduledTask;
 import org.apache.aurora.scheduler.base.TaskGroupKey;
 import org.apache.aurora.scheduler.base.TaskTestUtil;
+import org.apache.aurora.scheduler.filter.SchedulingFilter;
 import org.apache.aurora.scheduler.offers.HostOffer;
 import org.apache.aurora.scheduler.offers.Offers;
 import org.apache.aurora.scheduler.storage.Storage;
@@ -197,9 +198,10 @@ public class HttpOfferSetImplTest extends EasyMockTest {
 
     // OFFER_B is put in the bottom of list as it has 1 starting task.
     IScheduledTask task = makeTask("id", JOB);
-    Iterable<HostOffer> sortedOffers = httpOfferSet.getOrdered(
-        TaskGroupKey.from(task.getAssignedTask().getTask()),
-        TaskTestUtil.toResourceRequest(task.getAssignedTask().getTask()));
+    TaskGroupKey groupKey = TaskGroupKey.from(task.getAssignedTask().getTask());
+    SchedulingFilter.ResourceRequest resourceRequest =
+        TaskTestUtil.toResourceRequest(task.getAssignedTask().getTask());
+    Iterable<HostOffer> sortedOffers = httpOfferSet.getOrdered(groupKey, resourceRequest);
 
     assertEquals(3, Iterables.size(sortedOffers));
     HostOffer lastOffer = null;
