@@ -96,7 +96,8 @@ public class ProbabilisticPriorityAssigner extends TaskAssignerImpl {
     prioritySet.add(groupKey.getTask().getPriority());
 
     if (!isScheduled(prioritySet, groupKey.getTask().getPriority())) {
-      LOG.info("{} is being skipped to prioritize tasks with a higher priority {}", groupKey, prioritySet);
+      LOG.info("{} is being skipped to prioritize tasks with a higher priority {}",
+          groupKey, prioritySet);
       return new HashSet<String>();
     }
 
@@ -106,8 +107,8 @@ public class ProbabilisticPriorityAssigner extends TaskAssignerImpl {
   /**
    * Determine whether or not schedule the group with priority based on the set of priorities
    * of pending tasks.
-   * The exponent controls the probabilistic outcome. The higher exponent, the less chance that the low
-   * priority tasks can be scheduled.
+   * The exponent controls the probabilistic outcome. The higher exponent, the less chance that
+   * the low priority tasks can be scheduled.
    * If exponent is greater than 1, it is an exponential distribution.
    * If exponent is 1, it is a uniform distribution.
    * If exponent is 0, there is no probabilistic priority queueing.

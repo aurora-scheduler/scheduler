@@ -80,8 +80,8 @@ Even though there is `priority` in `TaskConfig`, aurora-scheduler does not suppo
 `priority` is mainly used for `preemption` which applied to the tasks after `TASK_ASSIGNED`.
 When jobs (or services) are pending for scheduling, we can prioritize the `jobs` with higher priorities. 
 In this approach, we do not offer hard priority queueing that strictly blocks lower priority tasks from being scheduled.
-Instead, we offer less chance to the low priority jobs and more chance for the high priority jobs to be scheduled, called `probabilistic priority queueing`.
-
+Instead, we offer a higher chance of being scheduled to jobs with higher priority and a lower chance to jobs with a lower priority.
+We will refer to this approach as `probabilistic priority queueing`.
 To enable `probabilistic priority queueing`, you need to set the following parameters
 - `task_assigner_modules=io.github.aurora.scheduler.scheduling.ProbabilisticPriorityAssignerModule`
 - `probabilistic_priority_assigner_exponent=[non-negative double like 1.0]`
