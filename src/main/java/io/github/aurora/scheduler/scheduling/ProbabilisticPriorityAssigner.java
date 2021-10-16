@@ -96,7 +96,7 @@ public class ProbabilisticPriorityAssigner extends TaskAssignerImpl {
     prioritySet.add(groupKey.getTask().getPriority());
 
     if (!isScheduled(prioritySet, groupKey.getTask().getPriority())) {
-      LOG.info("do not schedule {} to prioritize higher priorities {}", groupKey, prioritySet);
+      LOG.info("{} is being skipped to prioritize tasks with a higher priority {}", groupKey, prioritySet);
       return new HashSet<String>();
     }
 
