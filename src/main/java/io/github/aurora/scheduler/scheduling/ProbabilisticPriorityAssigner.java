@@ -109,7 +109,7 @@ public class ProbabilisticPriorityAssigner extends TaskAssignerImpl {
    * The exponent controls the probabilistic outcome. The higher exponent, the less chance that the low
    * priority tasks can be scheduled.
    * If exponent is greater than 1, it is an exponential distribution.
-   * If exponent is 1, it is the uniform distribution.
+   * If exponent is 1, it is a uniform distribution.
    * If exponent is 0, there is no probabilistic priority queueing.
    */
   @VisibleForTesting
