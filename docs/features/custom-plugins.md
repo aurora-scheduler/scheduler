@@ -9,10 +9,10 @@ By default, Aurora does not sort or filter OfferSet.
 We can customize the offerset that changes the behavior of the scheduler.
 For example, we can spread out the load by sorting the offers.
 
+#### HTTP OfferSet
 One of the limitations of this approach is that you need to develop your own OfferSet implementation and compile it with Apache Aurora.
 To make OfferSet plugin more flexible, we proposed HTTP OfferSet that allows us to sorts or filters the offers externally via http.
 
-* HTTP OfferSet
 We added HTTP OfferSet `io.github.aurora.scheduler.offers.HttpOfferSetModule` that allows Aurora to talk to an external REST API server.
 
 How to configure HTTP OfferSet?
@@ -68,3 +68,33 @@ We can monitor this plugin by looking at the endpoint `/vars`. The following met
 - `http_offer_set_max_diff`: The number of different offers between the original `OfferSet` and the received one.
 
 HTTP OfferSet resets the above metrics every `sla_stat_refresh_interval`.
+
+TaskAssigner
+--------
+TaskAssigner is the plugin module that allows us to match a group of tasks to a set of offers.
+By default, `org.apache.aurora.scheduler.scheduling.TaskAssignerImplModule` does matching in a FIFO manner.
+We can take advantage of TaskAssigner when there is additional requirement.
+
+#### Probabilistic priority queueing
+Even though there is `priority` in `TaskConfig`, aurora-scheduler does not support priority queueing. 
+`priority` is mainly used for `preemption` which applied to the tasks after `TASK_ASSIGNED`.
+When jobs (or services) are pending for scheduling, we can prioritize the `jobs` with higher priorities. 
+In this approach, we do not offer hard priority queueing that strictly blocks lower priority tasks from being scheduled.
+Instead, we offer a higher chance of being scheduled to jobs with higher priority and a lower chance to jobs with a lower priority.
+We will refer to this approach as `probabilistic priority queueing`.
+To enable `probabilistic priority queueing`, you need to set the following parameters
+- `task_assigner_modules=io.github.aurora.scheduler.scheduling.ProbabilisticPriorityAssignerModule`
+- `probabilistic_priority_assigner_exponent=[non-negative double like 1.0]`
+
+`io.github.aurora.scheduler.scheduling.ProbabilisticPriorityAssignerModule` is the plugin module while 
+`probabilistic_priority_assigner_exponent` is its control parameter.
+The non-negative chance of scheduling a task with `priority` is computed by `(priority + 1)^probabilistic_priority_assigner_exponent`. 
+For example, there are `N` pending jobs with 2 priorities `{0, 1}`. How does the `chance` impact on scheduling these jobs?  
+
+- If `probabilistic_priority_assigner_exponent=1.0`, the chance of `0` is `1` while the chance of `1` is `2`. 
+If the scheduler has to schedule 900 jobs first from the queue, it likely schedules 600 jobs with `priority=1` and 300 jobs with `priority=0`. 
+- If `probabilistic_priority_assigner_exponent=3.0`, the chance of `0` is `1` while the chance of `1` is `8`.
+If the scheduler has to schedule 900 jobs first from the queue, it likely schedules 800 jobs with `priority=1` and 100 jobs with `priority=0`.
+- If `probabilistic_priority_assigner_exponent=0.0`, the chance of `0` is `1` while the chance of `1` is `1`. 
+If the scheduler has to schedule 900 jobs first from the queue, it likely schedules 450 jobs with `priority=1` and 450 jobs with `priority=0`.
+In this case, `probabilistic priority queueing` behaves like the default `TaskAssigner`.
