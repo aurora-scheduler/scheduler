@@ -15,9 +15,6 @@ package io.github.aurora.scheduler.offers;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
@@ -55,30 +52,6 @@ public class HttpOfferSetModule extends AbstractModule {
   private final CliOptions cliOptions;
   private final Options options;
   private static final Logger LOG = LoggerFactory.getLogger(HttpOfferSetModule.class);
-  static List<Long> latencyMsList = Collections.synchronizedList(new LinkedList<>());
-  static List<Long> offerSetDiffList = Collections.synchronizedList(new LinkedList<>());
-  private static long failureCount = 0;
-  private static boolean enabled = false;
-
-  public static synchronized void incFailureCount() {
-    HttpOfferSetModule.failureCount++;
-  }
-
-  public static synchronized long getFailureCount() {
-    return HttpOfferSetModule.failureCount;
-  }
-
-  public static synchronized void resetFailureCount() {
-    HttpOfferSetModule.failureCount = 0;
-  }
-
-  public static synchronized void enable(boolean mEnabled) {
-    HttpOfferSetModule.enabled = mEnabled;
-  }
-
-  public static synchronized boolean isEnabled() {
-    return HttpOfferSetModule.enabled;
-  }
 
   @Parameters(separators = "=")
   public static class Options {

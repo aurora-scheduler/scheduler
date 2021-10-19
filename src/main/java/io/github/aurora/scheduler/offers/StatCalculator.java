@@ -66,12 +66,12 @@ public class StatCalculator implements Runnable {
   @Override
   public void run() {
     float medianLatency =
-            Util.percentile(HttpOfferSetModule.latencyMsList, 50.0)
+            Util.percentile(HttpOfferSetImpl.latencyMsList, 50.0)
                               .floatValue() / 1000000;
     float avgLatency =
-            (float) Util.avg(HttpOfferSetModule.latencyMsList) / 1000000;
+            (float) Util.avg(HttpOfferSetImpl.latencyMsList) / 1000000;
     float worstLatency =
-            (float) Util.max(HttpOfferSetModule.latencyMsList) / 1000000;
+            (float) Util.max(HttpOfferSetImpl.latencyMsList) / 1000000;
 
     String medianLatencyName = "http_offer_set_median_latency_ms";
     metricCache.getUnchecked(medianLatencyName).set(medianLatencyName, medianLatency);
@@ -81,16 +81,16 @@ public class StatCalculator implements Runnable {
     metricCache.getUnchecked(avgLatencyName).set(avgLatencyName, avgLatency);
     String failureCountName = "http_offer_set_failure_count";
     metricCache.getUnchecked(failureCountName).set(failureCountName,
-            HttpOfferSetModule.getFailureCount());
+        HttpOfferSetImpl.getFailureCount());
 
-    long maxOfferSetDiff = Util.max(HttpOfferSetModule.offerSetDiffList);
+    long maxOfferSetDiff = Util.max(HttpOfferSetImpl.offerSetDiffList);
     String maxOffSetDiffName = "http_offer_set_max_diff";
     metricCache.getUnchecked(maxOffSetDiffName).set(maxOffSetDiffName,
         maxOfferSetDiff);
 
     // reset the stats.
-    HttpOfferSetModule.latencyMsList.clear();
-    HttpOfferSetModule.resetFailureCount();
-    HttpOfferSetModule.offerSetDiffList.clear();
+    HttpOfferSetImpl.latencyMsList.clear();
+    HttpOfferSetImpl.resetFailureCount();
+    HttpOfferSetImpl.offerSetDiffList.clear();
   }
 }

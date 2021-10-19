@@ -18,7 +18,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -72,6 +72,11 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 @VisibleForTesting
 public class HttpOfferSetImpl implements OfferSet {
   private static final Logger LOG = LoggerFactory.getLogger(HttpOfferSetImpl.class);
+
+  static List<Long> latencyMsList = Collections.synchronizedList(new LinkedList<>());
+  static List<Long> offerSetDiffList = Collections.synchronizedList(new LinkedList<>());
+  private static long failureCount = 0;
+  private static boolean useEndpoint = false;
 
   private final Set<HostOffer> offers;
   private final Storage storage;
@@ -128,12 +133,12 @@ public class HttpOfferSetImpl implements OfferSet {
     storage = mStorage;
     try {
       endpoint = new URL(Objects.requireNonNull(url));
-      HttpOfferSetModule.enable(true);
-      LOG.info("HttpOfferSetModule Enabled.");
+      HttpOfferSetImpl.setUseEndpoint(true);
+      LOG.info("HttpOfferSetImpl Enabled.");
     } catch (MalformedURLException e) {
       LOG.error("http_offer_set_endpoint is malformed. ", e);
-      HttpOfferSetModule.enable(false);
-      LOG.info("HttpOfferSetModule Disabled.");
+      HttpOfferSetImpl.setUseEndpoint(false);
+      LOG.info("HttpOfferSetImpl Disabled.");
     }
     timeoutMs = Objects.requireNonNull(mTimeoutMs);
     maxRetries = Objects.requireNonNull(mMaxRetries);
@@ -142,6 +147,26 @@ public class HttpOfferSetImpl implements OfferSet {
     LOG.info("HttpOfferSet's timeout: {} (ms)", timeoutMs);
     LOG.info("HttpOfferSet's max retries: {}", maxRetries);
     LOG.info("HttpOfferSet's max number of starting tasks per slave: {}", maxStartingTasksPerSlave);
+  }
+
+  public static synchronized void incFailureCount() {
+    HttpOfferSetImpl.failureCount++;
+  }
+
+  public static synchronized long getFailureCount() {
+    return HttpOfferSetImpl.failureCount;
+  }
+
+  public static synchronized void resetFailureCount() {
+    HttpOfferSetImpl.failureCount = 0;
+  }
+
+  public static synchronized void setUseEndpoint(boolean mEnabled) {
+    HttpOfferSetImpl.useEndpoint = mEnabled;
+  }
+
+  public static synchronized boolean isUseEndpoint() {
+    return HttpOfferSetImpl.useEndpoint;
   }
 
   @Override
@@ -176,7 +201,7 @@ public class HttpOfferSetImpl implements OfferSet {
     long startTime = System.nanoTime();
     // if there are no available offers, do nothing.
     if (offers.isEmpty()) {
-      HttpOfferSetModule.latencyMsList.add(System.nanoTime() - startTime);
+      HttpOfferSetImpl.latencyMsList.add(System.nanoTime() - startTime);
       return offers;
     }
 
@@ -190,8 +215,8 @@ public class HttpOfferSetImpl implements OfferSet {
     }
 
     // find the bad offers and put them at the bottom of the list
-    List<HostOffer> badOffers = new ArrayList<>();
-    List<HostOffer> goodOffers = new ArrayList<>();
+    List<HostOffer> badOffers = new LinkedList<>();
+    List<HostOffer> goodOffers = new LinkedList<>();
     if (maxStartingTasksPerSlave > 0) {
       badOffers =  offers.stream()
           .filter(offer ->
@@ -207,17 +232,14 @@ public class HttpOfferSetImpl implements OfferSet {
       if (!badOffers.isEmpty()) {
         LOG.info("the number of bad offers: {}", badOffers.size());
       }
-
-      if (goodOffers.isEmpty()) {
-        HttpOfferSetModule.latencyMsList.add(System.nanoTime() - startTime);
-        return badOffers;
-      }
+    } else {
+      goodOffers = offers.stream().collect(Collectors.toList());
     }
 
-    // if the external http endpoint was not reachable
-    if (!HttpOfferSetModule.isEnabled()) {
+    // if the external http endpoint was not reachable or we have nothing to send out
+    if (!HttpOfferSetImpl.isUseEndpoint() || goodOffers.isEmpty()) {
       goodOffers.addAll(badOffers);
-      HttpOfferSetModule.latencyMsList.add(System.nanoTime() - startTime);
+      HttpOfferSetImpl.latencyMsList.add(System.nanoTime() - startTime);
       return goodOffers;
     }
 
@@ -227,26 +249,24 @@ public class HttpOfferSetImpl implements OfferSet {
       ScheduleRequest scheduleRequest = createRequest(goodOffers, resourceRequest, startTime);
       LOG.info("Sending request {}", scheduleRequest.jobKey);
       String responseStr = sendRequest(scheduleRequest);
-      orderedOffers = processResponse(responseStr, HttpOfferSetModule.offerSetDiffList);
+      orderedOffers = processResponse(goodOffers, responseStr);
     } catch (IOException e) {
       LOG.error("Failed to schedule the task of {} using {} ",
           resourceRequest.getTask().getJob().toString(), endpoint, e);
-      HttpOfferSetModule.incFailureCount();
+      HttpOfferSetImpl.incFailureCount();
     } finally {
-      // shutdown HttpOfferSet if failure is consistent.
-      if (HttpOfferSetModule.getFailureCount() >= maxRetries) {
+      // stop reaching the endpoint if failure is consistent.
+      if (HttpOfferSetImpl.getFailureCount() >= maxRetries) {
         LOG.error("Reaches {} retries. {} is disabled", maxRetries, endpoint);
-        HttpOfferSetModule.enable(false);
+        HttpOfferSetImpl.setUseEndpoint(false);
       }
     }
     if (orderedOffers != null) {
-      orderedOffers.addAll(badOffers);
-      HttpOfferSetModule.latencyMsList.add(System.nanoTime() - startTime);
-      return orderedOffers;
+      goodOffers = orderedOffers;
     }
 
     goodOffers.addAll(badOffers);
-    HttpOfferSetModule.latencyMsList.add(System.nanoTime() - startTime);
+    HttpOfferSetImpl.latencyMsList.add(System.nanoTime() - startTime);
     return goodOffers;
   }
 
@@ -292,12 +312,12 @@ public class HttpOfferSetImpl implements OfferSet {
     }
   }
 
-  List<HostOffer> processResponse(String responseStr, List<Long> offerSetDiffList)
+  List<HostOffer> processResponse(List<HostOffer> mOffers, String responseStr)
       throws IOException {
     ScheduleResponse response = jsonMapper.readValue(responseStr, ScheduleResponse.class);
     LOG.info("Received {} offers", response.hosts.size());
 
-    Map<String, HostOffer> offerMap = offers.stream()
+    Map<String, HostOffer> offerMap = mOffers.stream()
             .collect(Collectors.toMap(offer -> offer.getAttributes().getHost(), offer -> offer));
     if (!response.error.trim().isEmpty()) {
       LOG.error("Unable to receive offers from {} due to {}", endpoint, response.error);
@@ -313,14 +333,14 @@ public class HttpOfferSetImpl implements OfferSet {
           .collect(Collectors.toList());
 
     //offSetDiff is the total number of missing offers and the extra offers
-    long offSetDiff = offers.size() - (response.hosts.size() - extraOffers.size())
+    long offSetDiff = mOffers.size() - (response.hosts.size() - extraOffers.size())
                         + extraOffers.size();
     offerSetDiffList.add(offSetDiff);
     if (offSetDiff > 0) {
       LOG.warn("The number of different offers between the original and received offer sets is {}",
           offSetDiff);
       if (LOG.isDebugEnabled()) {
-        List<String> missedOffers = offers.stream()
+        List<String> missedOffers = mOffers.stream()
             .map(offer -> offer.getAttributes().getHost())
             .filter(host -> !response.hosts.contains(host))
             .collect(Collectors.toList());

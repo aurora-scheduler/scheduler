@@ -17,8 +17,8 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
@@ -66,16 +66,17 @@ public class HttpOfferSetImplTest extends EasyMockTest {
       IHostAttributes.build(new HostAttributes().setMode(NONE).setHost(HOST_C)));
   private static final String HOST_D = "HOST_D";
 
+  private final Storage storage = MemStorageModule.newEmptyStorage();
+
   private HttpOfferSetImpl httpOfferSet;
+  private Set<HostOffer> offers;
 
   @Before
   public void setUp() throws IOException {
-    Storage storage = MemStorageModule.newEmptyStorage();
     storage.write((Storage.MutateWork.NoResult.Quiet) sp -> {
       ScheduledTask t0 = makeTask("t0", JOB)
           .newBuilder()
           .setStatus(ScheduleStatus.PENDING);
-
       ScheduledTask t1 = makeTask("t1", JOB)
           .newBuilder()
           .setStatus(ScheduleStatus.STARTING);
@@ -100,15 +101,17 @@ public class HttpOfferSetImplTest extends EasyMockTest {
           IScheduledTask.setFromBuilders(ImmutableList.of(t0, t1, t2)));
     });
 
-    httpOfferSet = new HttpOfferSetImpl(new HashSet<>(),
+    offers = new HashSet<>();
+    offers.add(OFFER_A);
+    offers.add(OFFER_B);
+    offers.add(OFFER_C);
+
+    httpOfferSet = new HttpOfferSetImpl(offers,
         storage,
         0,
         new URL("http://localhost:9090/v1/offerset"),
         0,
-        1);
-    httpOfferSet.add(OFFER_A);
-    httpOfferSet.add(OFFER_B);
-    httpOfferSet.add(OFFER_C);
+        0);
   }
 
   @Test
@@ -118,24 +121,25 @@ public class HttpOfferSetImplTest extends EasyMockTest {
             + HOST_A + "\",\""
             + HOST_B + "\",\""
             + HOST_C + "\"]}";
-    List<Long> offerSetDiffList = new LinkedList<>();
 
-    List<HostOffer> sortedOffers = httpOfferSet.processResponse(responseStr, offerSetDiffList);
+    List<HostOffer> mOffers = ImmutableList.copyOf(httpOfferSet.values());
+
+    List<HostOffer> sortedOffers = httpOfferSet.processResponse(mOffers, responseStr);
     assertEquals(sortedOffers.size(), 3);
     assertEquals(sortedOffers.get(0).getAttributes().getHost(), HOST_A);
     assertEquals(sortedOffers.get(1).getAttributes().getHost(), HOST_B);
     assertEquals(sortedOffers.get(2).getAttributes().getHost(), HOST_C);
-    assertEquals((long) offerSetDiffList.get(0), 0);
+    assertEquals((long) HttpOfferSetImpl.offerSetDiffList.get(0), 0);
 
     // plugin returns less offers than Aurora has.
     responseStr = "{\"error\": \"\", \"hosts\": [\""
             + HOST_A + "\",\""
             + HOST_C + "\"]}";
-    sortedOffers = httpOfferSet.processResponse(responseStr, offerSetDiffList);
+    sortedOffers = httpOfferSet.processResponse(mOffers, responseStr);
     assertEquals(sortedOffers.size(), 2);
     assertEquals(sortedOffers.get(0).getAttributes().getHost(), HOST_A);
     assertEquals(sortedOffers.get(1).getAttributes().getHost(), HOST_C);
-    assertEquals((long) offerSetDiffList.get(1), 1);
+    assertEquals((long) HttpOfferSetImpl.offerSetDiffList.get(1), 1);
 
     // plugin returns more offers than Aurora has.
     responseStr = "{\"error\": \"\", \"hosts\": [\""
@@ -143,23 +147,23 @@ public class HttpOfferSetImplTest extends EasyMockTest {
             + HOST_B + "\",\""
             + HOST_D + "\",\""
             + HOST_C + "\"]}";
-    sortedOffers = httpOfferSet.processResponse(responseStr, offerSetDiffList);
+    sortedOffers = httpOfferSet.processResponse(mOffers, responseStr);
     assertEquals(sortedOffers.size(), 3);
     assertEquals(sortedOffers.get(0).getAttributes().getHost(), HOST_A);
     assertEquals(sortedOffers.get(1).getAttributes().getHost(), HOST_B);
     assertEquals(sortedOffers.get(2).getAttributes().getHost(), HOST_C);
-    assertEquals((long) offerSetDiffList.get(2), 1);
+    assertEquals((long) HttpOfferSetImpl.offerSetDiffList.get(2), 1);
 
     // plugin omits 1 offer & returns 1 extra offer
     responseStr = "{\"error\": \"\", \"hosts\": [\""
         + HOST_A + "\",\""
         + HOST_D + "\",\""
         + HOST_C + "\"]}";
-    sortedOffers = httpOfferSet.processResponse(responseStr, offerSetDiffList);
+    sortedOffers = httpOfferSet.processResponse(mOffers, responseStr);
     assertEquals(sortedOffers.size(), 2);
     assertEquals(sortedOffers.get(0).getAttributes().getHost(), HOST_A);
     assertEquals(sortedOffers.get(1).getAttributes().getHost(), HOST_C);
-    assertEquals((long) offerSetDiffList.get(3), 2);
+    assertEquals((long) HttpOfferSetImpl.offerSetDiffList.get(3), 2);
 
     responseStr = "{\"error\": \"Error\", \"hosts\": [\""
             + HOST_A + "\",\""
@@ -167,7 +171,7 @@ public class HttpOfferSetImplTest extends EasyMockTest {
             + HOST_C + "\"]}";
     boolean isException = false;
     try {
-      httpOfferSet.processResponse(responseStr, offerSetDiffList);
+      httpOfferSet.processResponse(mOffers, responseStr);
     } catch (IOException ioe) {
       isException = true;
     }
@@ -176,7 +180,7 @@ public class HttpOfferSetImplTest extends EasyMockTest {
     responseStr = "{\"error\": \"error\"}";
     isException = false;
     try {
-      httpOfferSet.processResponse(responseStr, new LinkedList<>());
+      httpOfferSet.processResponse(mOffers, responseStr);
     } catch (IOException ioe) {
       isException = true;
     }
@@ -185,7 +189,7 @@ public class HttpOfferSetImplTest extends EasyMockTest {
     responseStr = "{\"weird\": \"cannot decode this json string\"}";
     isException = false;
     try {
-      httpOfferSet.processResponse(responseStr, new LinkedList<>());
+      httpOfferSet.processResponse(mOffers, responseStr);
     } catch (IOException ioe) {
       isException = true;
     }
@@ -193,17 +197,44 @@ public class HttpOfferSetImplTest extends EasyMockTest {
   }
 
   @Test
-  public void testGetOrdered() {
+  public void testGetOrdered() throws IOException {
     control.replay();
-
-    // OFFER_B is put in the bottom of list as it has 1 starting task.
     IScheduledTask task = makeTask("id", JOB);
     TaskGroupKey groupKey = TaskGroupKey.from(task.getAssignedTask().getTask());
     SchedulingFilter.ResourceRequest resourceRequest =
         TaskTestUtil.toResourceRequest(task.getAssignedTask().getTask());
-    Iterable<HostOffer> sortedOffers = httpOfferSet.getOrdered(groupKey, resourceRequest);
 
-    assertEquals(3, Iterables.size(sortedOffers));
+    // return the same set of offers
+    Iterable<HostOffer> sortedOffers = httpOfferSet.getOrdered(groupKey, resourceRequest);
+    assertEquals(offers.size(), Iterables.size(sortedOffers));
+
+    httpOfferSet = new HttpOfferSetImpl(offers,
+        storage,
+        0,
+        new URL("http://localhost:9090/v1/offerset"),
+        0,
+        -1);
+    sortedOffers = httpOfferSet.getOrdered(groupKey, resourceRequest);
+    assertEquals(offers.size(), Iterables.size(sortedOffers));
+
+    httpOfferSet = new HttpOfferSetImpl(offers,
+        storage,
+        0,
+        new URL("http://localhost:9090/v1/offerset"),
+        0,
+        2);
+    sortedOffers = httpOfferSet.getOrdered(groupKey, resourceRequest);
+    assertEquals(offers.size(), Iterables.size(sortedOffers));
+
+    // OFFER_B is put in the bottom of list as it has 1 starting task.
+    httpOfferSet = new HttpOfferSetImpl(offers,
+        storage,
+        0,
+        new URL("http://localhost:9090/v1/offerset"),
+        0,
+        1);
+    sortedOffers = httpOfferSet.getOrdered(groupKey, resourceRequest);
+    assertEquals(offers.size(), Iterables.size(sortedOffers));
     HostOffer lastOffer = null;
     for (HostOffer o: sortedOffers) {
       lastOffer = o;
