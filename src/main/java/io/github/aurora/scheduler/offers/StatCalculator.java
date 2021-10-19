@@ -13,7 +13,9 @@
  */
 package io.github.aurora.scheduler.offers;
 
+import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 
 import javax.inject.Inject;
 
@@ -65,13 +67,29 @@ public class StatCalculator implements Runnable {
 
   @Override
   public void run() {
+    // make copies of stat data as synchronizedList is not thread-safe iterating
+    List<Long> latencyList;
+    synchronized (HttpOfferSetImpl.latencyMsList) {
+      latencyList = HttpOfferSetImpl.latencyMsList.stream().collect(Collectors.toList());
+    }
+    List<Long> offerSetDiffList;
+    synchronized (HttpOfferSetImpl.offerSetDiffList) {
+      offerSetDiffList = HttpOfferSetImpl.offerSetDiffList.stream().collect(Collectors.toList());
+    }
+    long failureCount = HttpOfferSetImpl.getFailureCount();
+
+    // reset the stats.
+    HttpOfferSetImpl.latencyMsList.clear();
+    HttpOfferSetImpl.resetFailureCount();
+    HttpOfferSetImpl.offerSetDiffList.clear();
+
     float medianLatency =
-            Util.percentile(HttpOfferSetImpl.latencyMsList, 50.0)
+            Util.percentile(latencyList, 50.0)
                               .floatValue() / 1000000;
     float avgLatency =
-            (float) Util.avg(HttpOfferSetImpl.latencyMsList) / 1000000;
+            (float) Util.avg(latencyList) / 1000000;
     float worstLatency =
-            (float) Util.max(HttpOfferSetImpl.latencyMsList) / 1000000;
+            (float) Util.max(latencyList) / 1000000;
 
     String medianLatencyName = "http_offer_set_median_latency_ms";
     metricCache.getUnchecked(medianLatencyName).set(medianLatencyName, medianLatency);
@@ -80,17 +98,10 @@ public class StatCalculator implements Runnable {
     String avgLatencyName = "http_offer_set_avg_latency_ms";
     metricCache.getUnchecked(avgLatencyName).set(avgLatencyName, avgLatency);
     String failureCountName = "http_offer_set_failure_count";
-    metricCache.getUnchecked(failureCountName).set(failureCountName,
-        HttpOfferSetImpl.getFailureCount());
+    metricCache.getUnchecked(failureCountName).set(failureCountName, failureCount);
 
-    long maxOfferSetDiff = Util.max(HttpOfferSetImpl.offerSetDiffList);
+    long maxOfferSetDiff = Util.max(offerSetDiffList);
     String maxOffSetDiffName = "http_offer_set_max_diff";
-    metricCache.getUnchecked(maxOffSetDiffName).set(maxOffSetDiffName,
-        maxOfferSetDiff);
-
-    // reset the stats.
-    HttpOfferSetImpl.latencyMsList.clear();
-    HttpOfferSetImpl.resetFailureCount();
-    HttpOfferSetImpl.offerSetDiffList.clear();
+    metricCache.getUnchecked(maxOffSetDiffName).set(maxOffSetDiffName, maxOfferSetDiff);
   }
 }
