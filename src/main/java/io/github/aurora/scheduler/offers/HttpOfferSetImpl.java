@@ -201,7 +201,6 @@ public class HttpOfferSetImpl implements OfferSet {
     long startTime = System.nanoTime();
     // if there are no available offers, do nothing.
     if (offers.isEmpty()) {
-      HttpOfferSetImpl.latencyMsList.add(System.nanoTime() - startTime);
       return offers;
     }
 
