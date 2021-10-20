@@ -36,6 +36,7 @@ import org.apache.aurora.scheduler.SchedulerServicesModule;
 import org.apache.aurora.scheduler.base.AsyncUtil;
 import org.apache.aurora.scheduler.config.CliOptions;
 import org.apache.aurora.scheduler.config.CommandLine;
+import org.apache.aurora.scheduler.config.types.TimeAmount;
 import org.apache.aurora.scheduler.offers.HostOffer;
 import org.apache.aurora.scheduler.offers.OfferOrderBuilder;
 import org.apache.aurora.scheduler.offers.OfferSet;
@@ -58,8 +59,8 @@ public class HttpOfferSetModule extends AbstractModule {
     @Parameter(names = "-http_offer_set_endpoint")
     String httpOfferSetEndpoint = "http://localhost:9090/v1/offerset";
 
-    @Parameter(names = "-http_offer_set_timeout_ms")
-    int httpOfferSetTimeoutMs = 100;
+    @Parameter(names = "-http_offer_set_timeout")
+    TimeAmount httpOfferSetTimeout = new TimeAmount(100, Time.MILLISECONDS);
 
     @Parameter(names = "-http_offer_set_max_retries")
     int httpOfferSetMaxRetries = 10;
@@ -69,6 +70,9 @@ public class HttpOfferSetModule extends AbstractModule {
     // httpOfferSetMaxStartingTasksPerSlave less than or equal to zero
     @Parameter(names = "-http_offer_set_max_starting_tasks_per_slave")
     int httpOfferSetMaxStartingTasksPerSlave = 0;
+
+    @Parameter(names = "-http_offer_set_task_fetch_interval")
+    TimeAmount httpOfferSetTaskFetchInterval = new TimeAmount(1, Time.SECONDS);
   }
 
   static {
@@ -91,7 +95,7 @@ public class HttpOfferSetModule extends AbstractModule {
           }).toInstance(OfferOrderBuilder.create(cliOptions.offer.offerOrder));
         bind(Integer.class)
                 .annotatedWith(HttpOfferSetImpl.TimeoutMs.class)
-                .toInstance(options.httpOfferSetTimeoutMs);
+                .toInstance(options.httpOfferSetTimeout.getValue().intValue());
         bind(String.class)
                 .annotatedWith(HttpOfferSetImpl.Endpoint.class)
                 .toInstance(options.httpOfferSetEndpoint);
@@ -107,12 +111,20 @@ public class HttpOfferSetModule extends AbstractModule {
     });
 
     bind(StatCalculator.class).in(com.google.inject.Singleton.class);
+    bind(TaskFetcher.class).in(com.google.inject.Singleton.class);
+
     bind(ScheduledExecutorService.class)
             .annotatedWith(Executor.class)
             .toInstance(AsyncUtil.singleThreadLoggingScheduledExecutor("HttpOfferSet-%d", LOG));
-    bind(Integer.class)
+    bind(Long.class)
             .annotatedWith(RefreshRateMs.class)
-            .toInstance(cliOptions.sla.slaRefreshInterval.as(Time.MILLISECONDS).intValue());
+            .toInstance(cliOptions.sla.slaRefreshInterval.as(Time.MILLISECONDS));
+    bind(Long.class)
+        .annotatedWith(TaskFetcherRateSec.class)
+        .toInstance(options.httpOfferSetTaskFetchInterval.as(Time.MILLISECONDS));
+    bind(Integer.class)
+        .annotatedWith(MaxStartingTaskPerSlave.class)
+        .toInstance(options.httpOfferSetMaxStartingTasksPerSlave);
     bind(StatUpdater.class).in(com.google.inject.Singleton.class);
     SchedulerServicesModule.addSchedulerActiveServiceBinding(binder()).to(StatUpdater.class);
   }
@@ -127,24 +139,46 @@ public class HttpOfferSetModule extends AbstractModule {
   @Target({ FIELD, PARAMETER, METHOD }) @Retention(RUNTIME)
   @interface RefreshRateMs { }
 
+  @VisibleForTesting
+  @Qualifier
+  @Target({ FIELD, PARAMETER, METHOD }) @Retention(RUNTIME)
+  @interface TaskFetcherRateSec { }
+
+  @VisibleForTesting
+  @Qualifier
+  @Target({ FIELD, PARAMETER, METHOD }) @Retention(RUNTIME)
+  @interface MaxStartingTaskPerSlave { }
+
   static class StatUpdater extends AbstractIdleService {
     private final ScheduledExecutorService executor;
     private final StatCalculator calculator;
-    private final Integer refreshRateMs;
+    private final TaskFetcher taskFetcher;
+    private final Long refreshRateMs;
+    private final Long taskFetcherRateMs;
+    private final Integer maxStartingTasksPerSlave;
 
     @Inject
     StatUpdater(
             @Executor ScheduledExecutorService mExecutor,
             StatCalculator mCalculator,
-            @RefreshRateMs Integer mRefreshRateMs) {
+            TaskFetcher mTaskFetcher,
+            @RefreshRateMs Long mRefreshRateMs,
+            @TaskFetcherRateSec Long mTaskFetcherRateMs,
+            @MaxStartingTaskPerSlave Integer mMaxStartingTasksPerSlave) {
       executor = requireNonNull(mExecutor);
       calculator = requireNonNull(mCalculator);
-      refreshRateMs = mRefreshRateMs;
+      taskFetcher = requireNonNull(mTaskFetcher);
+      refreshRateMs = requireNonNull(mRefreshRateMs);
+      taskFetcherRateMs = requireNonNull(mTaskFetcherRateMs);
+      maxStartingTasksPerSlave = requireNonNull(mMaxStartingTasksPerSlave);
     }
 
     @Override
     protected void startUp() {
       executor.scheduleAtFixedRate(calculator, 0, refreshRateMs, TimeUnit.MILLISECONDS);
+      if (maxStartingTasksPerSlave > 0) {
+        executor.scheduleAtFixedRate(taskFetcher, 0, taskFetcherRateMs, TimeUnit.MILLISECONDS);
+      }
     }
 
     @Override

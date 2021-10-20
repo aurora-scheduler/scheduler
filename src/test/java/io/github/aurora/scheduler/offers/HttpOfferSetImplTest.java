@@ -107,7 +107,6 @@ public class HttpOfferSetImplTest extends EasyMockTest {
     offers.add(OFFER_C);
 
     httpOfferSet = new HttpOfferSetImpl(offers,
-        storage,
         0,
         new URL("http://localhost:9090/v1/offerset"),
         0,
@@ -203,13 +202,13 @@ public class HttpOfferSetImplTest extends EasyMockTest {
     TaskGroupKey groupKey = TaskGroupKey.from(task.getAssignedTask().getTask());
     SchedulingFilter.ResourceRequest resourceRequest =
         TaskTestUtil.toResourceRequest(task.getAssignedTask().getTask());
+    HttpOfferSetImpl.fetchStartingTasks(storage);
 
     // return the same set of offers
     Iterable<HostOffer> sortedOffers = httpOfferSet.getOrdered(groupKey, resourceRequest);
     assertEquals(offers.size(), Iterables.size(sortedOffers));
 
     httpOfferSet = new HttpOfferSetImpl(offers,
-        storage,
         0,
         new URL("http://localhost:9090/v1/offerset"),
         0,
@@ -218,7 +217,6 @@ public class HttpOfferSetImplTest extends EasyMockTest {
     assertEquals(offers.size(), Iterables.size(sortedOffers));
 
     httpOfferSet = new HttpOfferSetImpl(offers,
-        storage,
         0,
         new URL("http://localhost:9090/v1/offerset"),
         0,
@@ -228,7 +226,6 @@ public class HttpOfferSetImplTest extends EasyMockTest {
 
     // OFFER_B is put in the bottom of list as it has 1 starting task.
     httpOfferSet = new HttpOfferSetImpl(offers,
-        storage,
         0,
         new URL("http://localhost:9090/v1/offerset"),
         0,

@@ -17,10 +17,17 @@ We added HTTP OfferSet `io.github.aurora.scheduler.offers.HttpOfferSetModule` th
 
 How to configure HTTP OfferSet?
 - offer_set_module=io.github.aurora.scheduler.offers.HttpOfferSetModule 
-- http_offer_set_timeout_ms is http timeout in milliseconds.
+- http_offer_set_timeout is http timeout value. `100ms` is the default value.
 - http_offer_set_max_retries is the number of retries if the module fails to connects to the external REST API server.
-If it exceeds the number of retries, Aurora uses the native offerset implementation.
+`10` is the default value.
+If it exceeds the number of retries, HTTP OfferSet will not reach the external endpoint anymore.
 - http_offer_set_endpoint is the REST API endpoint, e.g. http://127.0.0.1:9090/v1/offerset.
+- http_offer_set_max_starting_tasks_per_slave is the maximum starting tasks per slave.
+If a slave has more this number of starting tasks, it will be put at the end of offer list. 
+If you want to use this feature, please set this parameter a positive integer number.
+It is disabled by default.
+- http_offer_set_task_fetch_interval determine how often HTTP OfferSet fetches the starting tasks from the `task_store`.
+By default, it is `1secs`. 
 
 How to implement the external REST API server?
 The REST API needs to handle the request in the following format:

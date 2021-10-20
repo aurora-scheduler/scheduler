@@ -75,11 +75,11 @@ public class HttpOfferSetImpl implements OfferSet {
 
   static List<Long> latencyMsList = Collections.synchronizedList(new LinkedList<>());
   static List<Long> offerSetDiffList = Collections.synchronizedList(new LinkedList<>());
+  private static Iterable<IScheduledTask> startingTasks = new LinkedList<>();
   private static long failureCount = 0;
   private static boolean useEndpoint = false;
 
   private final Set<HostOffer> offers;
-  private final Storage storage;
   private final ObjectMapper jsonMapper = new ObjectMapper();
   private final CloseableHttpClient httpClient = HttpClients.createDefault();
   private final int timeoutMs;
@@ -89,13 +89,11 @@ public class HttpOfferSetImpl implements OfferSet {
   private URL endpoint;
 
   public HttpOfferSetImpl(Set<HostOffer> mOffers,
-                          Storage mStorage,
                           int mTimeoutMs,
                           URL mEndpoint,
                           int mMaxRetries,
                           int mMaxStartingTasksPerSlave) {
     offers = mOffers;
-    storage = mStorage;
     timeoutMs = mTimeoutMs;
     endpoint = mEndpoint;
     maxRetries = mMaxRetries;
@@ -124,13 +122,11 @@ public class HttpOfferSetImpl implements OfferSet {
 
   @Inject
   public HttpOfferSetImpl(Ordering<HostOffer> ordering,
-                          Storage mStorage,
                           @TimeoutMs Integer mTimeoutMs,
                           @Endpoint String url,
                           @MaxRetries Integer mMaxRetries,
                           @MaxStartingTaskPerSlave Integer mMaxStartingTasksPerSlave) {
     offers = new ConcurrentSkipListSet<>(ordering);
-    storage = mStorage;
     try {
       endpoint = new URL(Objects.requireNonNull(url));
       HttpOfferSetImpl.setUseEndpoint(true);
@@ -167,6 +163,11 @@ public class HttpOfferSetImpl implements OfferSet {
 
   public static synchronized boolean isUseEndpoint() {
     return HttpOfferSetImpl.useEndpoint;
+  }
+
+  public static synchronized void fetchStartingTasks(Storage storage) {
+    startingTasks = Storage.Util.fetchTasks(storage,
+        Query.unscoped().byStatus(ScheduleStatus.STARTING));
   }
 
   @Override
@@ -206,11 +207,11 @@ public class HttpOfferSetImpl implements OfferSet {
 
     // count the number of starting tasks per slave
     Map<String, Integer> hostTaskCountMap = new HashMap<>();
-    Iterable<IScheduledTask> startingTasks =
-        Storage.Util.fetchTasks(storage, Query.unscoped().byStatus(ScheduleStatus.STARTING));
-    for (IScheduledTask task : startingTasks) {
-      String slaveId = task.getAssignedTask().getSlaveId();
-      hostTaskCountMap.put(slaveId, hostTaskCountMap.getOrDefault(slaveId, 0) + 1);
+    synchronized (startingTasks) {
+      for (IScheduledTask task : startingTasks) {
+        String slaveId = task.getAssignedTask().getSlaveId();
+        hostTaskCountMap.put(slaveId, hostTaskCountMap.getOrDefault(slaveId, 0) + 1);
+      }
     }
 
     // find the bad offers and put them at the bottom of the list
