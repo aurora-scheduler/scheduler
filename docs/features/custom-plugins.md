@@ -23,7 +23,7 @@ How to configure HTTP OfferSet?
 If it exceeds the number of retries, HTTP OfferSet will not reach the external endpoint anymore.
 - http_offer_set_endpoint is the REST API endpoint, e.g. http://127.0.0.1:9090/v1/offerset.
 - http_offer_set_max_starting_tasks_per_slave is the maximum starting tasks per slave.
-If a slave has more this number of starting tasks, it will be put at the end of offer list. 
+If a slave has more than this number of starting tasks, it will be put at the end of offer list. 
 If you want to use this feature, please set this parameter a positive integer number.
 It is disabled by default.
 - http_offer_set_task_fetch_interval determine how often HTTP OfferSet fetches the starting tasks from the `task_store`.
