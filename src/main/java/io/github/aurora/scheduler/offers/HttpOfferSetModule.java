@@ -66,7 +66,7 @@ public class HttpOfferSetModule extends AbstractModule {
     int httpOfferSetMaxRetries = 10;
 
     // the slaves have more than or equal to the httpOfferSetMaxStartingTasksPerSlave
-    // are put in the bottom of the offerset. If you want to enable this feature, set
+    // are put in the bottom of the offerset. If you want to disable this feature, set
     // httpOfferSetMaxStartingTasksPerSlave less than or equal to zero
     @Parameter(names = "-http_offer_set_max_starting_tasks_per_slave")
     int httpOfferSetMaxStartingTasksPerSlave = 0;
