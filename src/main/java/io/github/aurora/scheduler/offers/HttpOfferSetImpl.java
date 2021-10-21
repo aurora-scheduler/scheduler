@@ -253,7 +253,7 @@ public class HttpOfferSetImpl implements OfferSet {
     } catch (IOException e) {
       LOG.error("Failed to schedule the task of {} using {} ",
           resourceRequest.getTask().getJob().toString(), endpoint, e);
-      HttpOfferSetImpl.incFailureCount();
+      HttpOfferSetImpl.incrementFailureCount();
     } finally {
       // stop reaching the endpoint if failure is consistent.
       if (HttpOfferSetImpl.getFailureCount() >= maxRetries) {
