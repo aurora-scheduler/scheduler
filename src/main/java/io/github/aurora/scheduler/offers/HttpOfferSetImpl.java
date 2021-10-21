@@ -145,7 +145,7 @@ public class HttpOfferSetImpl implements OfferSet {
     LOG.info("HttpOfferSet's max number of starting tasks per slave: {}", maxStartingTasksPerSlave);
   }
 
-  public static synchronized void incFailureCount() {
+  public static synchronized void incrementFailureCount() {
     HttpOfferSetImpl.failureCount++;
   }
 
