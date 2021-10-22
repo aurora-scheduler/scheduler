@@ -16,6 +16,7 @@ package io.github.aurora.scheduler.scheduling;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
@@ -54,7 +55,8 @@ public class ProbabilisticPriorityAssigner extends TaskAssignerImpl {
   private static final Logger LOG = LoggerFactory.
       getLogger(ProbabilisticPriorityAssigner.class);
 
-  private final Storage storage;
+  private static Iterable<IScheduledTask> pendindTasks = new LinkedList<>();
+
   private Double exponent;
 
   @VisibleForTesting
@@ -69,10 +71,8 @@ public class ProbabilisticPriorityAssigner extends TaskAssignerImpl {
       OfferManager offerManager,
       UpdateAgentReserver updateAgentReserver,
       StatsProvider statsProvider,
-      Storage storage,
       @Exponent Double exponent) {
     super(stateManager, taskFactory, offerManager, updateAgentReserver, statsProvider);
-    this.storage = requireNonNull(storage);
     this.exponent = requireNonNull(exponent);
   }
 
@@ -87,12 +87,11 @@ public class ProbabilisticPriorityAssigner extends TaskAssignerImpl {
 
     // probabilistic priority queueing: may not schedule these tasks if
     // there are pending tasks with higher priority.
-    Iterable<IScheduledTask> pendindTasks = getPendingTasks();
     Set<Integer> prioritySet = new HashSet<>();
     for (IScheduledTask t: pendindTasks) {
       prioritySet.add(t.getAssignedTask().getTask().getPriority());
     }
-    //TODO(lenhattan86): Is the group is always included in the pending task set?
+    //this group is not always included in the pending task set
     prioritySet.add(groupKey.getTask().getPriority());
 
     if (!isScheduled(prioritySet, groupKey.getTask().getPriority())) {
@@ -131,8 +130,9 @@ public class ProbabilisticPriorityAssigner extends TaskAssignerImpl {
   }
 
   @VisibleForTesting
-  Iterable<IScheduledTask> getPendingTasks() {
-    return Storage.Util.fetchTasks(storage, Query.unscoped().byStatus(ScheduleStatus.PENDING));
+  public static synchronized void fetchPendingTasks(Storage storage) {
+    pendindTasks =
+        Storage.Util.fetchTasks(storage, Query.unscoped().byStatus(ScheduleStatus.PENDING));
   }
 
   @VisibleForTesting
