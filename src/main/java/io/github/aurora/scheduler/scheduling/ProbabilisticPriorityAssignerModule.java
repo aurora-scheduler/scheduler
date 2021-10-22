@@ -77,7 +77,6 @@ public class ProbabilisticPriorityAssignerModule extends AbstractModule {
         .annotatedWith(ProbabilisticPriorityAssigner.Exponent.class)
         .toInstance(options.probabilisticPriorityAssignerExponent);
     bind(TaskAssigner.class).to(ProbabilisticPriorityAssigner.class).in(Singleton.class);
-
     bind(TaskFetcher.class).in(com.google.inject.Singleton.class);
     bind(ScheduledExecutorService.class)
         .annotatedWith(Executor.class)
