@@ -110,7 +110,8 @@ public class HttpOfferSetImplTest extends EasyMockTest {
         0,
         new URL("http://localhost:9090/v1/offerset"),
         0,
-        0);
+        0,
+        false);
   }
 
   @Test
@@ -212,7 +213,8 @@ public class HttpOfferSetImplTest extends EasyMockTest {
         0,
         new URL("http://localhost:9090/v1/offerset"),
         0,
-        -1);
+        -1,
+        false);
     sortedOffers = httpOfferSet.getOrdered(groupKey, resourceRequest);
     assertEquals(offers.size(), Iterables.size(sortedOffers));
 
@@ -220,7 +222,8 @@ public class HttpOfferSetImplTest extends EasyMockTest {
         0,
         new URL("http://localhost:9090/v1/offerset"),
         0,
-        2);
+        2,
+        false);
     sortedOffers = httpOfferSet.getOrdered(groupKey, resourceRequest);
     assertEquals(offers.size(), Iterables.size(sortedOffers));
 
@@ -229,7 +232,8 @@ public class HttpOfferSetImplTest extends EasyMockTest {
         0,
         new URL("http://localhost:9090/v1/offerset"),
         0,
-        1);
+        1,
+        false);
     sortedOffers = httpOfferSet.getOrdered(groupKey, resourceRequest);
     assertEquals(offers.size(), Iterables.size(sortedOffers));
     HostOffer lastOffer = null;
@@ -237,5 +241,15 @@ public class HttpOfferSetImplTest extends EasyMockTest {
       lastOffer = o;
     }
     assertEquals(OFFER_B, lastOffer);
+
+    // filter OFFER_B out
+    httpOfferSet = new HttpOfferSetImpl(offers,
+        0,
+        new URL("http://localhost:9090/v1/offerset"),
+        0,
+        1,
+        true);
+    sortedOffers = httpOfferSet.getOrdered(groupKey, resourceRequest);
+    assertEquals(offers.size() - 1, Iterables.size(sortedOffers));
   }
 }

@@ -56,22 +56,32 @@ public class HttpOfferSetModule extends AbstractModule {
 
   @Parameters(separators = "=")
   public static class Options {
-    @Parameter(names = "-http_offer_set_endpoint")
+    @Parameter(names = "-http_offer_set_endpoint",
+        description = "http_offer_set endpoint")
     String httpOfferSetEndpoint = "http://localhost:9090/v1/offerset";
 
-    @Parameter(names = "-http_offer_set_timeout")
+    @Parameter(names = "-http_offer_set_timeout",
+        description = "http_offer_set timeout")
     TimeAmount httpOfferSetTimeout = new TimeAmount(100, Time.MILLISECONDS);
 
-    @Parameter(names = "-http_offer_set_max_retries")
+    @Parameter(names = "-http_offer_set_max_retries",
+        description = "Maximum number of tries to reach the http_offer_set_endpoint")
     int httpOfferSetMaxRetries = 10;
 
     // the slaves have more than or equal to the httpOfferSetMaxStartingTasksPerSlave
     // are put in the bottom of the offerset. If you want to disable this feature, set
     // httpOfferSetMaxStartingTasksPerSlave less than or equal to zero
-    @Parameter(names = "-http_offer_set_max_starting_tasks_per_slave")
+    @Parameter(names = "-http_offer_set_max_starting_tasks_per_slave",
+        description = "Maximum number of starting tasks per slave are allowed")
     int httpOfferSetMaxStartingTasksPerSlave = 0;
 
-    @Parameter(names = "-http_offer_set_task_fetch_interval")
+    @Parameter(names = "-http_offer_set_filter_enabled",
+        description = "Allow to filter out the bad offers",
+        arity = 1)
+    boolean httpOfferSetFilterEnabled = false;
+
+    @Parameter(names = "-http_offer_set_task_fetch_interval",
+        description = "Interval of fetching starting tasks from task_store")
     TimeAmount httpOfferSetTaskFetchInterval = new TimeAmount(1, Time.SECONDS);
   }
 
@@ -87,24 +97,26 @@ public class HttpOfferSetModule extends AbstractModule {
 
   @Override
   protected void configure() {
-
     install(new PrivateModule() {
       @Override
       protected void configure() {
         bind(new TypeLiteral<Ordering<HostOffer>>() {
           }).toInstance(OfferOrderBuilder.create(cliOptions.offer.offerOrder));
         bind(Integer.class)
-                .annotatedWith(HttpOfferSetImpl.TimeoutMs.class)
-                .toInstance(options.httpOfferSetTimeout.getValue().intValue());
+            .annotatedWith(HttpOfferSetImpl.TimeoutMs.class)
+            .toInstance(options.httpOfferSetTimeout.getValue().intValue());
         bind(String.class)
-                .annotatedWith(HttpOfferSetImpl.Endpoint.class)
-                .toInstance(options.httpOfferSetEndpoint);
+            .annotatedWith(HttpOfferSetImpl.Endpoint.class)
+            .toInstance(options.httpOfferSetEndpoint);
         bind(Integer.class)
-                .annotatedWith(HttpOfferSetImpl.MaxRetries.class)
-                .toInstance(options.httpOfferSetMaxRetries);
+            .annotatedWith(HttpOfferSetImpl.MaxRetries.class)
+            .toInstance(options.httpOfferSetMaxRetries);
         bind(Integer.class)
             .annotatedWith(HttpOfferSetImpl.MaxStartingTaskPerSlave.class)
             .toInstance(options.httpOfferSetMaxStartingTasksPerSlave);
+        bind(Boolean.class)
+            .annotatedWith(HttpOfferSetImpl.FilterEnabled.class)
+            .toInstance(options.httpOfferSetFilterEnabled);
         bind(OfferSet.class).to(HttpOfferSetImpl.class).in(Singleton.class);
         expose(OfferSet.class);
       }
@@ -114,11 +126,11 @@ public class HttpOfferSetModule extends AbstractModule {
     bind(TaskFetcher.class).in(com.google.inject.Singleton.class);
 
     bind(ScheduledExecutorService.class)
-            .annotatedWith(Executor.class)
-            .toInstance(AsyncUtil.singleThreadLoggingScheduledExecutor("HttpOfferSet-%d", LOG));
+        .annotatedWith(Executor.class)
+        .toInstance(AsyncUtil.singleThreadLoggingScheduledExecutor("HttpOfferSet-%d", LOG));
     bind(Long.class)
-            .annotatedWith(RefreshRateMs.class)
-            .toInstance(cliOptions.sla.slaRefreshInterval.as(Time.MILLISECONDS));
+        .annotatedWith(RefreshRateMs.class)
+        .toInstance(cliOptions.sla.slaRefreshInterval.as(Time.MILLISECONDS));
     bind(Long.class)
         .annotatedWith(TaskFetcherRateSec.class)
         .toInstance(options.httpOfferSetTaskFetchInterval.as(Time.MILLISECONDS));

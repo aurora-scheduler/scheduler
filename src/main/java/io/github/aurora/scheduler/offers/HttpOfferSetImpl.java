@@ -85,6 +85,7 @@ public class HttpOfferSetImpl implements OfferSet {
   private final int timeoutMs;
   private final int maxRetries;
   private final int maxStartingTasksPerSlave;
+  private final boolean filterEnabled;
 
   private URL endpoint;
 
@@ -92,12 +93,14 @@ public class HttpOfferSetImpl implements OfferSet {
                           int mTimeoutMs,
                           URL mEndpoint,
                           int mMaxRetries,
-                          int mMaxStartingTasksPerSlave) {
+                          int mMaxStartingTasksPerSlave,
+                          boolean mFilterEnabled) {
     offers = mOffers;
     timeoutMs = mTimeoutMs;
     endpoint = mEndpoint;
     maxRetries = mMaxRetries;
     maxStartingTasksPerSlave = mMaxStartingTasksPerSlave;
+    filterEnabled = mFilterEnabled;
   }
 
   @VisibleForTesting
@@ -120,12 +123,18 @@ public class HttpOfferSetImpl implements OfferSet {
   @Target({ FIELD, PARAMETER, METHOD }) @Retention(RUNTIME)
   @interface MaxStartingTaskPerSlave { }
 
+  @VisibleForTesting
+  @Qualifier
+  @Target({ FIELD, PARAMETER, METHOD }) @Retention(RUNTIME)
+  @interface FilterEnabled { }
+
   @Inject
   public HttpOfferSetImpl(Ordering<HostOffer> ordering,
                           @TimeoutMs Integer mTimeoutMs,
                           @Endpoint String url,
                           @MaxRetries Integer mMaxRetries,
-                          @MaxStartingTaskPerSlave Integer mMaxStartingTasksPerSlave) {
+                          @MaxStartingTaskPerSlave Integer mMaxStartingTasksPerSlave,
+                          @FilterEnabled Boolean mFilterEnabled) {
     offers = new ConcurrentSkipListSet<>(ordering);
     try {
       endpoint = new URL(Objects.requireNonNull(url));
@@ -139,9 +148,11 @@ public class HttpOfferSetImpl implements OfferSet {
     timeoutMs = Objects.requireNonNull(mTimeoutMs);
     maxRetries = Objects.requireNonNull(mMaxRetries);
     maxStartingTasksPerSlave = Objects.requireNonNull(mMaxStartingTasksPerSlave);
+    filterEnabled = Objects.requireNonNull(mFilterEnabled);
     LOG.info("HttpOfferSet's endpoint: {}", endpoint);
     LOG.info("HttpOfferSet's timeout: {} (ms)", timeoutMs);
     LOG.info("HttpOfferSet's max retries: {}", maxRetries);
+    LOG.info("HttpOfferSet's filter enabled: {}", filterEnabled);
     LOG.info("HttpOfferSet's max number of starting tasks per slave: {}", maxStartingTasksPerSlave);
   }
 
@@ -218,11 +229,13 @@ public class HttpOfferSetImpl implements OfferSet {
     List<HostOffer> badOffers = new LinkedList<>();
     List<HostOffer> goodOffers = new LinkedList<>();
     if (maxStartingTasksPerSlave > 0) {
-      badOffers =  offers.stream()
-          .filter(offer ->
-              hostTaskCountMap.getOrDefault(offer.getOffer().getAgentId().getValue(), 0)
-                  >= maxStartingTasksPerSlave)
-          .collect(Collectors.toList());
+      if (!filterEnabled) {
+        badOffers =  offers.stream()
+            .filter(offer ->
+                hostTaskCountMap.getOrDefault(offer.getOffer().getAgentId().getValue(), 0)
+                    >= maxStartingTasksPerSlave)
+            .collect(Collectors.toList());
+      }
       goodOffers =  offers.stream()
           .filter(offer ->
               hostTaskCountMap.getOrDefault(offer.getOffer().getAgentId().getValue(), 0)

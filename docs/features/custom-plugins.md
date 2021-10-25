@@ -17,20 +17,21 @@ We added HTTP OfferSet `io.github.aurora.scheduler.offers.HttpOfferSetModule` th
 
 How to configure HTTP OfferSet?
 - offer_set_module=io.github.aurora.scheduler.offers.HttpOfferSetModule 
-- http_offer_set_timeout is http timeout value. `100ms` is the default value.
-- http_offer_set_max_retries is the number of retries if the module fails to connects to the external REST API server.
+- `http_offer_set_timeout` is http timeout value. `100ms` is the default value.
+- `http_offer_set_max_retries` is the number of retries if the module fails to connects to the external REST API server.
 `10` is the default value.
 If it exceeds the number of retries, HTTP OfferSet will not reach the external endpoint anymore.
-- http_offer_set_endpoint is the REST API endpoint, e.g. http://127.0.0.1:9090/v1/offerset.
-- http_offer_set_max_starting_tasks_per_slave is the maximum starting tasks per slave.
-If a slave has more than this number of starting tasks, it will be put at the end of offer list. 
+- `http_offer_set_endpoint` is the REST API endpoint, e.g. http://127.0.0.1:9090/v1/offerset.
+- `http_offer_set_filter_enabled` is used to filter bad offers out. By default, it is disabled.
+- `http_offer_set_max_starting_tasks_per_slave` is the maximum starting tasks per slave.
+If a slave has more than this number of starting tasks, it will be put at the end of offer list (`http_offer_set_filter_enabled=false`) 
+or taken out (`http_offer_set_filter_enabled=true`). 
 This feature is useful when a node is vulnerable to a certain number of tasks starting at the same time.
 A task often demands a lot of resources during STARTING (e.g., pulling docker images and frequent healchecks).
 Too many of them starting at the same time may overload the nodes.
 It is disabled by default.
 If you want to use this feature, please set this parameter a positive integer number.
-
-- http_offer_set_task_fetch_interval determine how often HTTP OfferSet fetches the starting tasks from the `task_store`.
+- `http_offer_set_task_fetch_interval` determine how often HTTP OfferSet fetches the starting tasks from the `task_store`.
 By default, it is `1secs`. 
 
 How to implement the external REST API server?
