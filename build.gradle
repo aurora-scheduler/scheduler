@@ -17,7 +17,7 @@ plugins {
   id 'com.github.hierynomus.license' version '0.15.0'
   id "com.github.node-gradle.node" version "3.1.1"
   id 'me.champeau.gradle.jmh' version '0.5.3'
-  id "com.github.spotbugs" version "4.7.5"
+  id "com.github.spotbugs" version "4.7.9"
 }
 
 apply plugin: 'application'
@@ -80,7 +80,7 @@ For more details, please see https://issues.apache.org/jira/browse/AURORA-1169
   ext.commonsLangRev = '3.12.0'
   ext.curatorRev = '4.3.0'
   ext.gsonRev = '2.3.1'
-  ext.guavaRev = '29.0-jre'
+  ext.guavaRev = '31.0.1-jre'
   ext.guiceRev = '4.2.3'
   ext.httpclientRev = '4.5.13'
   ext.httpcoreRev = '4.4.14'
