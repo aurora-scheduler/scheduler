@@ -88,8 +88,10 @@ public class ProbabilisticPriorityAssigner extends TaskAssignerImpl {
     // probabilistic priority queueing: may not schedule these tasks if
     // there are pending tasks with higher priority.
     Set<Integer> prioritySet = new HashSet<>();
-    for (IScheduledTask t: pendindTasks) {
-      prioritySet.add(t.getAssignedTask().getTask().getPriority());
+    synchronized (pendindTasks) {
+      for (IScheduledTask t: pendindTasks) {
+        prioritySet.add(t.getAssignedTask().getTask().getPriority());
+      }
     }
     //this group is not always included in the pending task set
     prioritySet.add(groupKey.getTask().getPriority());

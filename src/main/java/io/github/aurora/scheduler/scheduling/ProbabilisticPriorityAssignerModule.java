@@ -89,11 +89,13 @@ public class ProbabilisticPriorityAssignerModule extends AbstractModule {
     SchedulerServicesModule.addSchedulerActiveServiceBinding(binder()).to(StatUpdater.class);
   }
 
+  // to bind an executor object to StatUpdater using @Executor
   @VisibleForTesting
   @Qualifier
   @Target({ FIELD, PARAMETER, METHOD }) @Retention(RUNTIME)
   @interface Executor { }
 
+  // to bind probabilisticPriorityAssignerTaskFetchInterval value to StatUpdater
   @VisibleForTesting
   @Qualifier
   @Target({ FIELD, PARAMETER, METHOD }) @Retention(RUNTIME)
