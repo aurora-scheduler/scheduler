@@ -1,3 +1,13 @@
+0.26.0
+======
+
+## New/updated:
+- Enable probabilistic priority queueing by adding a task assigner plugin
+- Fix CI & compile error  
+- [httpofferset] put the bad offers to the bottom of the list 
+- upgrade mesos lib from 1.8.1 to 1.9.0
+- Several project dependencies have been upgraded. See CHANGELOG for more information
+
 0.25.0
 ======
 
