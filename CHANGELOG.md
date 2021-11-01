@@ -1,3 +1,17 @@
+Aurora Scheduler 0.26.0
+--------------------------------------------------------------------------------
+## Pull Requests
+* [#274](https://github.com/aurora-scheduler/scheduler/pull/274) - Upgrade ZK client version
+* [#306](https://github.com/aurora-scheduler/scheduler/pull/306) - Update Mesos library version
+* [#322](https://github.com/aurora-scheduler/scheduler/pull/322) - Probabilistic priority queueing
+* [#323](https://github.com/aurora-scheduler/scheduler/pull/323) - Implement missed methods for upgrade
+* [#325](https://github.com/aurora-scheduler/scheduler/pull/325) - Fix CI & compile error
+* [#336](https://github.com/aurora-scheduler/scheduler/pull/336) - [httpofferset] put the bad offers to the bottom of the list
+* [#344](https://github.com/aurora-scheduler/scheduler/pull/344) - Improve performance for Probabilistic priority queueing
+
+## Issues
+* [#324](https://github.com/aurora-scheduler/scheduler/issues/324) - Actions Ubuntu Xenial env is gone
+
 Aurora Scheduler 0.25.0
 --------------------------------------------------------------------------------
 ## Pull Requests
