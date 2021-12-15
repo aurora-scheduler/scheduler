@@ -367,7 +367,7 @@ sourceSets {
 
 dependencies {
   def shiroRev = '1.8.0'
-  def jettyDep = '9.3.11.v20160721'
+  def jettyDep = '11.0.7'
 
   compile project(':api')
   compile project(':commons')
