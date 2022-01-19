@@ -93,7 +93,7 @@ For more details, please see https://issues.apache.org/jira/browse/AURORA-1169
   ext.protobufRev = '3.19.3'
   ext.resteasyRev = '3.1.4.Final'
   ext.servletRev = '3.1.0'
-  ext.slf4jRev = '1.7.32'
+  ext.slf4jRev = '1.7.33'
   ext.stringTemplateRev = '3.2.1'
   ext.thriftRev = '0.10.0'
   ext.zookeeperRev = '3.4.14'
@@ -374,7 +374,7 @@ dependencies {
 
   compile 'aopalliance:aopalliance:1.0'
   compile "ch.qos.logback:logback-classic:${logbackRev}"
-  compile "com.beust:jcommander:1.81"
+  compile "com.beust:jcommander:1.82"
   compile "com.google.inject:guice:${guiceRev}"
   compile "com.google.inject.extensions:guice-assistedinject:${guiceRev}"
   compile "com.google.inject.extensions:guice-multibindings:${guiceRev}"
