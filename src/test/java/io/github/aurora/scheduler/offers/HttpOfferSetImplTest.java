@@ -64,12 +64,16 @@ public class HttpOfferSetImplTest extends EasyMockTest {
   private static final HostOffer OFFER_C = new HostOffer(
       Offers.makeOffer("OFFER_C", HOST_C),
       IHostAttributes.build(new HostAttributes().setMode(NONE).setHost(HOST_C)));
+  private static final HostOffer OFFER_C1 = new HostOffer(
+          Offers.makeOffer("OFFER_C1", HOST_C),
+          IHostAttributes.build(new HostAttributes().setMode(NONE).setHost(HOST_C)));
   private static final String HOST_D = "HOST_D";
 
   private final Storage storage = MemStorageModule.newEmptyStorage();
 
   private HttpOfferSetImpl httpOfferSet;
   private Set<HostOffer> offers;
+  private HttpOfferSetImpl duplicateHostsHttpOfferSet;
 
   @Before
   public void setUp() throws IOException {
@@ -112,6 +116,20 @@ public class HttpOfferSetImplTest extends EasyMockTest {
         0,
         0,
         false);
+
+    // duplicate host offers
+    Set<HostOffer> duplicateHostOffers = new HashSet<>();
+    duplicateHostOffers.add(OFFER_A);
+    duplicateHostOffers.add(OFFER_B);
+    duplicateHostOffers.add(OFFER_C);
+    duplicateHostOffers.add(OFFER_C1);
+
+    duplicateHostsHttpOfferSet = new HttpOfferSetImpl(duplicateHostOffers,
+            0,
+            new URL("http://localhost:9090/v1/offerset"),
+            0,
+            0,
+            false);
   }
 
   @Test
@@ -190,6 +208,71 @@ public class HttpOfferSetImplTest extends EasyMockTest {
     isException = false;
     try {
       httpOfferSet.processResponse(mOffers, responseStr);
+    } catch (IOException ioe) {
+      isException = true;
+    }
+    assertTrue(isException);
+
+    // Duplicate host test
+    responseStr = "{\"error\": \"\", \"hosts\": [\""
+            + HOST_A + "\",\""
+            + HOST_B + "\",\""
+            + HOST_C + "\"]}";
+
+    List<HostOffer> mDuplicateHostOffers = ImmutableList.
+            copyOf(duplicateHostsHttpOfferSet.values());
+    assertEquals(mDuplicateHostOffers.size(), 4);
+
+    sortedOffers = duplicateHostsHttpOfferSet.processResponse(mDuplicateHostOffers,
+            responseStr);
+    assertEquals(sortedOffers.size(), 4);
+    assertEquals(sortedOffers.get(0).getAttributes().getHost(), HOST_A);
+    assertEquals(sortedOffers.get(1).getAttributes().getHost(), HOST_B);
+    assertEquals(sortedOffers.get(2).getAttributes().getHost(), HOST_C);
+    assertEquals(sortedOffers.get(3).getAttributes().getHost(), HOST_C);
+    assertEquals((long) HttpOfferSetImpl.offerSetDiffList.get(4), 0);
+
+    // plugin returns less offers than Aurora has.
+    responseStr = "{\"error\": \"\", \"hosts\": [\""
+            + HOST_A + "\",\""
+            + HOST_C + "\"]}";
+    sortedOffers = duplicateHostsHttpOfferSet.processResponse(mDuplicateHostOffers, responseStr);
+    assertEquals(sortedOffers.size(), 3);
+    assertEquals(sortedOffers.get(0).getAttributes().getHost(), HOST_A);
+    assertEquals(sortedOffers.get(1).getAttributes().getHost(), HOST_C);
+    assertEquals((long) HttpOfferSetImpl.offerSetDiffList.get(5), 1);
+
+    // plugin returns more offers than Aurora has.
+    responseStr = "{\"error\": \"\", \"hosts\": [\""
+            + HOST_A + "\",\""
+            + HOST_B + "\",\""
+            + HOST_D + "\",\""
+            + HOST_C + "\"]}";
+    sortedOffers = duplicateHostsHttpOfferSet.processResponse(mDuplicateHostOffers, responseStr);
+    assertEquals(sortedOffers.size(), 4);
+    assertEquals(sortedOffers.get(0).getAttributes().getHost(), HOST_A);
+    assertEquals(sortedOffers.get(1).getAttributes().getHost(), HOST_B);
+    assertEquals(sortedOffers.get(2).getAttributes().getHost(), HOST_C);
+    assertEquals((long) HttpOfferSetImpl.offerSetDiffList.get(6), 1);
+
+    // plugin omits 1 offer & returns 1 extra offer
+    responseStr = "{\"error\": \"\", \"hosts\": [\""
+            + HOST_A + "\",\""
+            + HOST_D + "\",\""
+            + HOST_B + "\"]}";
+    sortedOffers = duplicateHostsHttpOfferSet.processResponse(mDuplicateHostOffers, responseStr);
+    assertEquals(sortedOffers.size(), 2);
+    assertEquals(sortedOffers.get(0).getAttributes().getHost(), HOST_A);
+    assertEquals(sortedOffers.get(1).getAttributes().getHost(), HOST_B);
+    assertEquals((long) HttpOfferSetImpl.offerSetDiffList.get(7), 3);
+
+    responseStr = "{\"error\": \"Error\", \"hosts\": [\""
+            + HOST_A + "\",\""
+            + HOST_B + "\",\""
+            + HOST_C + "\"]}";
+    isException = false;
+    try {
+      duplicateHostsHttpOfferSet.processResponse(mOffers, responseStr);
     } catch (IOException ioe) {
       isException = true;
     }

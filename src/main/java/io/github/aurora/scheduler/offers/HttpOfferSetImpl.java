@@ -18,13 +18,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.stream.Collectors;
 
@@ -331,30 +325,35 @@ public class HttpOfferSetImpl implements OfferSet {
     LOG.info("Received {} offers", response.hosts.size());
 
     Map<String, HostOffer> offerMap = mOffers.stream()
-            .collect(Collectors.toMap(offer -> offer.getAttributes().getHost(), offer -> offer));
+            .collect(Collectors.
+                    toMap(offer -> offer.getOffer().getId().getValue(), offer -> offer));
+
     if (!response.error.trim().isEmpty()) {
       LOG.error("Unable to receive offers from {} due to {}", endpoint, response.error);
       throw new IOException(response.error);
     }
-
-    List<HostOffer> orderedOffers = response.hosts.stream()
-          .map(host -> offerMap.get(host))
-          .filter(offer -> offer != null)
+    List<String> offerIDList = offerMap.keySet().stream()
+            .filter(offerId -> offerMap.get(offerId) != null && response.hosts
+                    .contains(offerMap.get(offerId).getOffer().getHostname()))
+            .collect(Collectors.toList());
+    List<HostOffer> orderedOffers = offerIDList.stream()
+          .map(offerId -> offerMap.get(offerId))
           .collect(Collectors.toList());
-    List<String> extraOffers = response.hosts.stream()
-          .filter(host -> offerMap.get(host) == null)
-          .collect(Collectors.toList());
 
-    //offSetDiff is the total number of missing offers and the extra offers
-    long offSetDiff = mOffers.size() - (response.hosts.size() - extraOffers.size())
-                        + extraOffers.size();
+    List<String> mHosts = mOffers.stream().map(offer -> offer.getOffer().getHostname())
+            .collect(Collectors.toList());
+    List<String> extraOffers = response.hosts.stream().filter(host -> !mHosts.contains(host))
+            .collect(Collectors.toList());
+
+    //offSetDiff is the absolute value of the different between Aurora offers and response offers
+    long offSetDiff = mOffers.size() - offerIDList.size() + extraOffers.size();
+    offSetDiff = Math.abs(offSetDiff);
     offerSetDiffList.add(offSetDiff);
     if (offSetDiff > 0) {
       LOG.warn("The number of different offers between the original and received offer sets is {}",
           offSetDiff);
       if (LOG.isDebugEnabled()) {
-        List<String> missedOffers = mOffers.stream()
-            .map(offer -> offer.getAttributes().getHost())
+        List<String> missedOffers = mHosts.stream()
             .filter(host -> !response.hosts.contains(host))
             .collect(Collectors.toList());
         LOG.debug("missed offers: {}", missedOffers);
