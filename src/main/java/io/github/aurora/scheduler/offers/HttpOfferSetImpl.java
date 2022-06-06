@@ -262,8 +262,8 @@ public class HttpOfferSetImpl implements OfferSet {
       ScheduleRequest scheduleRequest = createRequest(goodOffers, resourceRequest, startTime);
       LOG.info("Sending request {}", scheduleRequest.jobKey);
       String responseStr = sendRequest(scheduleRequest);
-      orderedOffers = processResponse(goodOffers, responseStr);
-    } catch (IOException e) {
+      orderedOffers = processResponse(goodOffers, responseStr, badOffers.size());
+    } catch (Exception e) {
       LOG.error("Failed to schedule the task of {} using {} ",
           resourceRequest.getTask().getJob().toString(), endpoint, e);
       HttpOfferSetImpl.incrementFailureCount();
@@ -325,7 +325,7 @@ public class HttpOfferSetImpl implements OfferSet {
     }
   }
 
-  List<HostOffer> processResponse(List<HostOffer> mOffers, String responseStr)
+  List<HostOffer> processResponse(List<HostOffer> mOffers, String responseStr, int badOfferSize)
       throws IOException {
     ScheduleResponse response = jsonMapper.readValue(responseStr, ScheduleResponse.class);
     LOG.info("Received {} offers", response.hosts.size());
@@ -348,7 +348,7 @@ public class HttpOfferSetImpl implements OfferSet {
             .collect(Collectors.toList());
 
     //offSetDiff is the value of the different between Aurora offers and response offers
-    long offSetDiff = mOffers.size() - orderedOffers.size() + extraOffers.size();
+    long offSetDiff = mOffers.size() + badOfferSize - orderedOffers.size() + extraOffers.size();
     offerSetDiffList.add(offSetDiff);
     if (offSetDiff > 0) {
       LOG.warn("The number of different offers between the original and received offer sets is {}",
