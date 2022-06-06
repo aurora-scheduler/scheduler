@@ -18,7 +18,13 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.stream.Collectors;
 
@@ -332,22 +338,17 @@ public class HttpOfferSetImpl implements OfferSet {
       LOG.error("Unable to receive offers from {} due to {}", endpoint, response.error);
       throw new IOException(response.error);
     }
-    List<String> offerIDList = offerMap.keySet().stream()
-            .filter(offerId -> offerMap.get(offerId) != null && response.hosts
-                    .contains(offerMap.get(offerId).getOffer().getHostname()))
+    List<HostOffer> orderedOffers = offerMap.values().stream().filter(offer -> response.hosts.
+                    contains(offer.getOffer().getHostname()))
             .collect(Collectors.toList());
-    List<HostOffer> orderedOffers = offerIDList.stream()
-          .map(offerId -> offerMap.get(offerId))
-          .collect(Collectors.toList());
 
     List<String> mHosts = mOffers.stream().map(offer -> offer.getOffer().getHostname())
             .collect(Collectors.toList());
     List<String> extraOffers = response.hosts.stream().filter(host -> !mHosts.contains(host))
             .collect(Collectors.toList());
 
-    //offSetDiff is the absolute value of the different between Aurora offers and response offers
-    long offSetDiff = mOffers.size() - offerIDList.size() + extraOffers.size();
-    offSetDiff = Math.abs(offSetDiff);
+    //offSetDiff is the value of the different between Aurora offers and response offers
+    long offSetDiff = mOffers.size() - orderedOffers.size() + extraOffers.size();
     offerSetDiffList.add(offSetDiff);
     if (offSetDiff > 0) {
       LOG.warn("The number of different offers between the original and received offer sets is {}",
