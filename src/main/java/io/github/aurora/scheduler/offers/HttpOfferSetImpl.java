@@ -262,8 +262,8 @@ public class HttpOfferSetImpl implements OfferSet {
       ScheduleRequest scheduleRequest = createRequest(goodOffers, resourceRequest, startTime);
       LOG.info("Sending request {}", scheduleRequest.jobKey);
       String responseStr = sendRequest(scheduleRequest);
-      orderedOffers = processResponse(goodOffers, responseStr);
-    } catch (IOException e) {
+      orderedOffers = processResponse(goodOffers, responseStr, badOffers.size());
+    } catch (Exception e) {
       LOG.error("Failed to schedule the task of {} using {} ",
           resourceRequest.getTask().getJob().toString(), endpoint, e);
       HttpOfferSetImpl.incrementFailureCount();
@@ -325,36 +325,33 @@ public class HttpOfferSetImpl implements OfferSet {
     }
   }
 
-  List<HostOffer> processResponse(List<HostOffer> mOffers, String responseStr)
+  List<HostOffer> processResponse(List<HostOffer> mOffers, String responseStr, int badOfferSize)
       throws IOException {
     ScheduleResponse response = jsonMapper.readValue(responseStr, ScheduleResponse.class);
     LOG.info("Received {} offers", response.hosts.size());
 
-    Map<String, HostOffer> offerMap = mOffers.stream()
-            .collect(Collectors.toMap(offer -> offer.getAttributes().getHost(), offer -> offer));
     if (!response.error.trim().isEmpty()) {
       LOG.error("Unable to receive offers from {} due to {}", endpoint, response.error);
       throw new IOException(response.error);
     }
+    // Use Map<String, List<HostOffer>> to fix offers with duplicate host name issue
+    Map<String, List<HostOffer>> offerMap = mOffers.stream().
+            collect(Collectors.groupingBy(offer -> offer.getOffer().getHostname(),
+                    Collectors.mapping(offer -> offer, Collectors.toList())));
+    List<HostOffer> orderedOffers = response.hosts.stream().map(host -> offerMap.get(host))
+            .filter(offerList -> offerList != null && !offerList.isEmpty()).
+            flatMap(e -> e.stream()).collect(Collectors.toList());
+    List<String> extraOffers = response.hosts.stream().filter(host -> offerMap.get(host) == null).
+            collect(Collectors.toList());
 
-    List<HostOffer> orderedOffers = response.hosts.stream()
-          .map(host -> offerMap.get(host))
-          .filter(offer -> offer != null)
-          .collect(Collectors.toList());
-    List<String> extraOffers = response.hosts.stream()
-          .filter(host -> offerMap.get(host) == null)
-          .collect(Collectors.toList());
-
-    //offSetDiff is the total number of missing offers and the extra offers
-    long offSetDiff = mOffers.size() - (response.hosts.size() - extraOffers.size())
-                        + extraOffers.size();
+    //offSetDiff is the value of the difference between Aurora offers and response offers
+    long offSetDiff = mOffers.size() + badOfferSize - orderedOffers.size() + extraOffers.size();
     offerSetDiffList.add(offSetDiff);
     if (offSetDiff > 0) {
       LOG.warn("The number of different offers between the original and received offer sets is {}",
           offSetDiff);
       if (LOG.isDebugEnabled()) {
-        List<String> missedOffers = mOffers.stream()
-            .map(offer -> offer.getAttributes().getHost())
+        List<String> missedOffers = offerMap.keySet().stream()
             .filter(host -> !response.hosts.contains(host))
             .collect(Collectors.toList());
         LOG.debug("missed offers: {}", missedOffers);
