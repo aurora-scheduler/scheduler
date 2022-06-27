@@ -1,7 +1,14 @@
+0.27.0
+======
+
+### New/updated:
+- Fix duplicate host issue for aurora scheduler
+- Revert "Bump react-router-dom from 5.3.0 to 6.0.2 in /ui"
+
 0.26.0
 ======
 
-## New/updated:
+### New/updated:
 - Enable probabilistic priority queueing by adding a task assigner plugin
 - Fix CI & compile error  
 - [httpofferset] put the bad offers to the bottom of the list 
