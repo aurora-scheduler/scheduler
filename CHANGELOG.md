@@ -1,3 +1,9 @@
+Aurora Scheduler 0.27.0
+--------------------------------------------------------------------------------
+## Pull Requests
+* [#445](https://github.com/aurora-scheduler/scheduler/pull/445) - Fix duplicate host issue for aurora scheduler, DTCPIOPS-5221
+* [#453](https://github.com/aurora-scheduler/scheduler/pull/453) - Revert "Bump react-router-dom from 5.3.0 to 6.0.2 in /ui"
+
 Aurora Scheduler 0.26.0
 --------------------------------------------------------------------------------
 ## Pull Requests
