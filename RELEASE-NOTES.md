@@ -4,7 +4,6 @@
 ### New/updated:
 - Fix duplicate host issue for aurora scheduler
 - Revert "Bump react-router-dom from 5.3.0 to 6.0.2 in /ui"
-- There is a new CI issue
 
 0.26.0
 ======
@@ -12,7 +11,7 @@
 ### New/updated:
 - Enable probabilistic priority queueing by adding a task assigner plugin
 - Fix CI & compile error  
-- [httpofferset] put the bad offers to the bottom of the list
+- [httpofferset] put the bad offers to the bottom of the list 
 - upgrade mesos lib from 1.8.1 to 1.9.0
 - Several project dependencies have been upgraded. See CHANGELOG for more information
 
@@ -65,9 +64,9 @@
   mechanism.
 - Modified auto-pause mechanism to address a corner case where the status of an instance in a batch
   would not enter a terminal state before the batch was paused. This resulted in undesired behavior
-  when the updated was resumed if that instance update had failed.
-- Auto-pause update mechanism now makes sure all instances have entered a terminal state
-  [SUCCEDED, FAILED] before pausing the update. With this change, the final pause to
+  when the updated was resumed if that instance update had failed. 
+- Auto-pause update mechanism now makes sure all instances have entered a terminal state 
+  [SUCCEDED, FAILED] before pausing the update. With this change, the final pause to 
   acknowledge an update had sucessfully completed has also been dropped.
 - Support has been added to use a resource with the key ips from Mesos.
 
