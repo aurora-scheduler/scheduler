@@ -40,7 +40,7 @@
     "eslint-plugin-standard": "^5.0.0",
     "file-loader": "^6.0.0",
     "jest": "^27.0.4",
-    "jest-cli": "^21.2.0",
+    "jest-cli": "^29.1.2",
     "react-test-renderer": "^17.0.1",
     "sass.js": "^0.11.1",
     "sassjs-loader": "^2.0.0",
